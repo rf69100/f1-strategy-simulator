@@ -1,0 +1,498 @@
+@import url('https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Racing+Sans+One&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --f1-red: #e10600;
+  --f1-dark: #15151e;
+  --f1-gray: #38383f;
+  --f1-blue: #0066cc;
+  --f1-yellow: #ffd700;
+  --f1-green: #00d474;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Titillium Web', sans-serif;
+  background: linear-gradient(135deg, var(--f1-dark) 0%, #1a1a2e 50%, #0f0f1a 100%);
+  color: white;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Typographie F1 */
+.f1-title {
+  font-family: 'Racing Sans One', cursive;
+  font-weight: 400;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.f1-subtitle {
+  font-family: 'Titillium Web', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Scrollbar personnalisée F1 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1f1f2b;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--f1-red) 0%, #ff1a1a 100%);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #ff1a1a 0%, #ff3333 100%);
+}
+
+/* Animations personnalisées F1 */
+@keyframes pulse-glow {
+  0%, 100% { 
+    opacity: 1; 
+    box-shadow: 0 0 20px rgba(225, 6, 0, 0.4);
+  }
+  50% { 
+    opacity: 0.7; 
+    box-shadow: 0 0 30px rgba(225, 6, 0, 0.6);
+  }
+}
+
+@keyframes slide-in-right {
+  from { 
+    transform: translateX(100%); 
+    opacity: 0; 
+  }
+  to { 
+    transform: translateX(0); 
+    opacity: 1; 
+  }
+}
+
+@keyframes speed-line {
+  0% { 
+    transform: translateX(-100%) skewX(-15deg); 
+    opacity: 0; 
+  }
+  50% { 
+    opacity: 1; 
+  }
+  100% { 
+    transform: translateX(200vw) skewX(-15deg); 
+    opacity: 0; 
+  }
+}
+
+@keyframes race-pulse {
+  0%, 100% { 
+    background-position: 0% 50%; 
+  }
+  50% { 
+    background-position: 100% 50%; 
+  }
+}
+
+@keyframes drift-glow {
+  0%, 100% { 
+    filter: drop-shadow(0 0 5px rgba(225, 6, 0, 0.3));
+  }
+  50% { 
+    filter: drop-shadow(0 0 15px rgba(225, 6, 0, 0.6));
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.animate-speed-line {
+  animation: speed-line 1s linear infinite;
+}
+
+.animate-race-pulse {
+  animation: race-pulse 3s ease-in-out infinite;
+  background: linear-gradient(-45deg, #e10600, #0066cc, #00d474, #ffd700);
+  background-size: 400% 400%;
+}
+
+.animate-drift-glow {
+  animation: drift-glow 1.5s ease-in-out infinite;
+}
+
+/* Classes utilitaires F1 */
+.f1-gradient {
+  background: linear-gradient(135deg, var(--f1-dark) 0%, #1a1a2e 50%, var(--f1-dark) 100%);
+}
+
+.f1-gradient-race {
+  background: linear-gradient(135deg, #15151e 0%, #2d1a1a 50%, #15151e 100%);
+}
+
+.f1-gradient-safety {
+  background: linear-gradient(135deg, #15151e 0%, #1a2d2a 50%, #15151e 100%);
+}
+
+.f1-card {
+  background: linear-gradient(145deg, rgba(30, 30, 45, 0.9) 0%, rgba(20, 20, 35, 0.9) 100%);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.f1-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.6s ease;
+}
+
+.f1-card:hover::before {
+  left: 100%;
+}
+
+.f1-card-glow {
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.f1-card-glow-red {
+  box-shadow: 
+    0 8px 32px rgba(225, 6, 0, 0.2),
+    0 0 20px rgba(225, 6, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Pneus F1 */
+.tyre-soft { 
+  background: linear-gradient(135deg, #ff0000, #cc0000);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.tyre-medium { 
+  background: linear-gradient(135deg, #ffd700, #e6c200);
+  color: black;
+  font-weight: 600;
+}
+
+.tyre-hard { 
+  background: linear-gradient(135deg, #ffffff, #e6e6e6);
+  color: black;
+  font-weight: 600;
+}
+
+.tyre-intermediate { 
+  background: linear-gradient(135deg, #00ff00, #00cc00);
+  color: black;
+  font-weight: 600;
+}
+
+.tyre-wet { 
+  background: linear-gradient(135deg, #0000ff, #0000cc);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.tyre-glow {
+  filter: drop-shadow(0 0 8px currentColor);
+}
+
+/* Indicateurs de performance */
+.performance-improving {
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.15) 0%, transparent 100%);
+  border-left: 3px solid #10b981;
+  position: relative;
+}
+
+.performance-improving::after {
+  content: '▲';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #10b981;
+  font-size: 0.75rem;
+}
+
+.performance-degrading {
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.15) 0%, transparent 100%);
+  border-left: 3px solid #ef4444;
+  position: relative;
+}
+
+.performance-degrading::after {
+  content: '▼';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #ef4444;
+  font-size: 0.75rem;
+}
+
+.performance-stable {
+  background: linear-gradient(90deg, rgba(107, 114, 128, 0.15) 0%, transparent 100%);
+  border-left: 3px solid #6b7280;
+}
+
+/* Overlay de course */
+.race-overlay {
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(225, 6, 0, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(0, 102, 204, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(0, 212, 116, 0.05) 0%, transparent 50%),
+    linear-gradient(135deg, rgba(21, 21, 30, 0.95) 0%, rgba(26, 26, 46, 0.95) 100%);
+}
+
+.speed-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.speed-line {
+  position: absolute;
+  width: 100px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--f1-red), transparent);
+  opacity: 0;
+  animation: speed-line 1s linear infinite;
+}
+
+/* Boutons F1 */
+.f1-button {
+  background: linear-gradient(135deg, var(--f1-red) 0%, #cc0000 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-family: 'Titillium Web', sans-serif;
+  font-weight: 600;
+  padding: 12px 24px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(225, 6, 0, 0.3);
+}
+
+.f1-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.f1-button:hover::before {
+  left: 100%;
+}
+
+.f1-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(225, 6, 0, 0.4);
+}
+
+.f1-button:active {
+  transform: translateY(0);
+}
+
+.f1-button-secondary {
+  background: linear-gradient(135deg, var(--f1-gray) 0%, #2a2a35 100%);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.f1-button-secondary:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Barres de progression F1 */
+.f1-progress {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.f1-progress-bar {
+  height: 100%;
+  border-radius: 10px;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.f1-progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Responsive design F1 */
+@media (max-width: 640px) {
+  .mobile-optimized {
+    font-size: 0.875rem;
+    padding: 8px 12px;
+  }
+  
+  .mobile-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .f1-card {
+    border-radius: 8px;
+    margin: 4px;
+  }
+  
+  .f1-button {
+    padding: 10px 16px;
+    font-size: 0.875rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .tablet-optimized {
+    font-size: 0.9rem;
+  }
+  
+  .tablet-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+}
+
+/* États de focus accessibles */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--f1-red);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Loading states F1 */
+.loading-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.f1-skeleton {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Transitions fluides F1 */
+.smooth-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.smooth-transition-slow {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Classes pour les données en temps réel */
+.live-data {
+  position: relative;
+}
+
+.live-data::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  background: var(--f1-red);
+  border-radius: 50%;
+  animation: pulse-glow 1s ease-in-out infinite;
+}
+
+/* Badges de position F1 */
+.position-badge {
+  font-family: 'Racing Sans One', cursive;
+  font-size: 0.875rem;
+  padding: 4px 8px;
+  border-radius: 12px;
+  min-width: 32px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.position-1 {
+  background: linear-gradient(135deg, #ffd700, #e6c200);
+  color: black;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.position-2 {
+  background: linear-gradient(135deg, #c0c0c0, #a8a8a8);
+  color: black;
+}
+
+.position-3 {
+  background: linear-gradient(135deg, #cd7f32, #b56c28);
+  color: white;
+}
+
+.position-other {
+  background: linear-gradient(135deg, var(--f1-gray), #2a2a35);
+  color: white;
+}
+
+/* Effets de curseur racing */
+.racing-cursor {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='none' stroke='%23e10600' stroke-width='2'/%3E%3C/svg%3E") 16 16, auto;
+}
