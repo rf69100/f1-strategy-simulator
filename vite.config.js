@@ -4,5 +4,6 @@ export default defineConfig({
     plugins: [react()],
     resolve: {
         extensions: ['.ts', '.tsx', '.js', '.jsx']
-    }
+    },
+    base: '/f1-simulator/',
 });
