@@ -6,10 +6,9 @@ import { getDriverPerformance, getTeamPerformance } from '../../utils/f1Data';
 interface TelemetryProps {
   driver: Driver;
   currentLap: number;
-  isRaceRunning?: boolean;
 }
 
-export const Telemetry = ({ driver, currentLap, isRaceRunning = false }: TelemetryProps) => {
+export const Telemetry = ({ driver, currentLap }: TelemetryProps) => {
   const lapTimes = driver.lapTimes.slice(-15); // 15 derniers tours
   const avgLapTime = lapTimes.length > 0 ? lapTimes.reduce((a, b) => a + b, 0) / lapTimes.length : 0;
   const bestLap = lapTimes.length > 0 ? Math.min(...lapTimes) : 0;

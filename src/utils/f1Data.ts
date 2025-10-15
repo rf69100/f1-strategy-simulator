@@ -312,7 +312,7 @@ export const getTyrePerformance = (compound: TyreCompound) => {
 };
 
 // === GÉNÉRATION DONNÉES ALÉATOIRES POUR SIMULATION ===
-export const generateRandomIncident = (lap: number, driverAggression: number): boolean => {
+export const generateRandomIncident = (_lap: number, driverAggression: number): boolean => {
   const baseChance = 0.002; // 0.2% de chance par tour
   const aggressionMultiplier = 1 + (driverAggression - 0.8) * 2; // Plus agressif = plus de risques
   const chance = baseChance * aggressionMultiplier;

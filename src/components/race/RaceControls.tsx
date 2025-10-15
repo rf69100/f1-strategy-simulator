@@ -1,6 +1,5 @@
-import { useState } from 'react';
 import { Card } from '../ui/Card';
-import { Cloud, CloudRain, Sun, Shield, Zap, Gauge, RotateCcw } from 'lucide-react';
+import { Cloud, CloudRain, Sun, Shield, Gauge, RotateCcw } from 'lucide-react';
 import { useSimulationStore } from '../../stores/simulationStore';
 import { useSimulation } from '../../hooks/useSimulation';
 

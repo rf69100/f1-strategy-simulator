@@ -243,7 +243,7 @@ export const simulateOvertake = (
 
 // === CALCUL TEMPS PIT STOP RÉALISTE ===
 export const calculatePitStopTime = (
-  compound: TyreCompound,
+  _compound: TyreCompound,
   fuelToAdd: number,
   teamPerformance: number = 0.8
 ): number => {

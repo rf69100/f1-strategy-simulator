@@ -9,11 +9,10 @@ export const useSimulation = () => {
     drivers,
     currentLap,
     totalLaps,
-    safetyCar,
     weather,
     setWeather,
     incidents,
-    raceSettings
+    
   } = useSimulationStore();
 
   const [simulationSpeed, setSimulationSpeed] = useState(1500); // 1.5 secondes par défaut

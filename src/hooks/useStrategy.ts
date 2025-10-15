@@ -35,7 +35,7 @@ export const useStrategy = (driverId: string) => {
 
   // Prochain arrêt prévu
   const nextPitStop = useMemo(() => {
-    return activeStrategy.pitStops?.find(stop => stop.lap > currentLap);
+    return activeStrategy.pitStops?.find((stop: PitStop) => stop.lap > currentLap);
   }, [activeStrategy.pitStops, currentLap]);
 
   // Tours restants sur pneus actuels
@@ -95,8 +95,8 @@ export const useStrategy = (driverId: string) => {
     };
 
     // Calcul avantage pneus
-    const currentTyrePerf = TYRE_PERFORMANCE[driver.tyres.compound];
-    const targetTyrePerf = TYRE_PERFORMANCE[activeStrategy.targetCompound];
+  const currentTyrePerf = TYRE_PERFORMANCE[driver.tyres.compound as TyreCompound];
+  const targetTyrePerf = TYRE_PERFORMANCE[activeStrategy.targetCompound as TyreCompound];
     analysis.tyreAdvantage = targetTyrePerf.grip - currentTyrePerf.grip;
 
     // Calcul efficacité carburant
@@ -106,7 +106,7 @@ export const useStrategy = (driverId: string) => {
   }, [activeStrategy, driver.tyres.compound, teamData]);
 
   // Fonctions helper
-  const calculatePredictedLapTime = (compound: TyreCompound, stintLength: number, circuit: any): number => {
+  const calculatePredictedLapTime = (compound: TyreCompound): number => {
     const baseTime = 90; // Temps de base en secondes
     const tyrePerf = TYRE_PERFORMANCE[compound];
     return baseTime * (1.05 - (tyrePerf.grip * 0.1));
@@ -137,7 +137,7 @@ export const useStrategy = (driverId: string) => {
         tyreCompound: compound,
         fuelAdded: fuelToAdd,
         duration: pitTime,
-        predictedLapTime: calculatePredictedLapTime(compound, stintLength, circuitData)
+  predictedLapTime: calculatePredictedLapTime(compound)
       });
     }
 

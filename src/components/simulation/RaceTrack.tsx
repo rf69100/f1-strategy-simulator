@@ -10,7 +10,7 @@ interface RaceTrackProps {
   circuitId?: string;
 }
 
-export const RaceTrack = ({ drivers, currentLap, totalLaps, circuitId = 'monaco' }: RaceTrackProps) => {
+export const RaceTrack = ({ drivers, currentLap, totalLaps }: RaceTrackProps) => {
   // Simuler les positions sur la piste basées sur le temps total
   const sortedDrivers = [...drivers].sort((a, b) => a.totalTime - b.totalTime);
   const leaderTime = sortedDrivers[0]?.totalTime || 0;

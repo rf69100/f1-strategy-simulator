@@ -17,7 +17,9 @@ export const PitWall = () => {
     safetyCar,
     startRace, 
     stopRace, 
-    advanceLap
+    advanceLap,
+    manualPit,
+    pitConfig
   } = useSimulationStore();
 
   const { getLeader } = useSimulation();
@@ -176,6 +178,8 @@ export const PitWall = () => {
             isOpen={!!selectedDriverForStrategy}
             onClose={() => setSelectedDriverForStrategy(null)}
             driverId={selectedDriverForStrategy}
+            manualPit={manualPit}
+            pitConfig={pitConfig}
           />
         )}
 

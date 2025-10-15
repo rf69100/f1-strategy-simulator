@@ -1,29 +1,41 @@
+import React from 'react';
 import { Driver, TyreCompound } from '../../types/f1';
 import { Card } from '../ui/Card';
 import { Calculator, TrendingUp, Clock, Zap, AlertTriangle, Target } from 'lucide-react';
-import { getTyrePerformance, getDriverPerformance, getTeamPerformance } from '../../utils/f1Data';
+import { getTyrePerformance, getTeamPerformance } from '../../utils/f1Data';
 
 interface StrategyBoardProps {
   driver: Driver;
   onTyreChange: (compound: TyreCompound) => void;
   onFuelAdd: (amount: number) => void;
+  onManualPit: (pitConfig: { tyreThreshold: number; fuelThreshold: number; pitDuration: number; compound?: TyreCompound }) => void;
   currentLap: number;
   totalLaps: number;
   weather?: string;
+  pitConfig: {
+    tyreThreshold: number;
+    fuelThreshold: number;
+    pitDuration: number;
+    setTyreThreshold: (val: number) => void;
+    setFuelThreshold: (val: number) => void;
+    setPitDuration: (val: number) => void;
+  };
 }
 
 export const StrategyBoard = ({ 
   driver, 
   onTyreChange, 
   onFuelAdd, 
+  onManualPit,
   currentLap, 
   totalLaps,
-  weather = 'DRY'
+  weather = 'DRY',
+  pitConfig
 }: StrategyBoardProps) => {
   const tyreOptions: TyreCompound[] = ['SOFT', 'MEDIUM', 'HARD', 'INTERMEDIATE', 'WET'];
+  const [selectedPitCompound, setSelectedPitCompound] = React.useState<TyreCompound>(driver.tyres.compound);
   
   // Données F1 réelles
-  const driverData = getDriverPerformance(driver.name);
   const teamData = getTeamPerformance(driver.team);
   
   // Calculs stratégiques améliorés
@@ -85,6 +97,9 @@ export const StrategyBoard = ({
 
   const urgencyLevel = getUrgencyLevel();
 
+  // Pit config controls
+  const { tyreThreshold, fuelThreshold, pitDuration, setTyreThreshold, setFuelThreshold, setPitDuration } = pitConfig;
+
   const getTyreColor = (compound: TyreCompound) => {
     const colors: Record<TyreCompound, string> = {
       'SOFT': 'bg-red-500 text-white',
@@ -98,7 +113,42 @@ export const StrategyBoard = ({
 
   return (
     <Card className="p-4">
-      {/* En-tête avec données équipe */}
+      {/* Configurable pit thresholds & manual pit button */}
+      <div className="mb-4 bg-black/20 rounded-lg p-3 border border-gray-700">
+        <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
+          <AlertTriangle size={16} className="text-yellow-400" />
+          Paramètres Pitstop
+        </h4>
+        <div className="grid grid-cols-4 gap-3 mb-2">
+          <div>
+            <label className="text-xs text-gray-300">Usure pneus (%)</label>
+            <input type="number" min={0} max={100} value={tyreThreshold} onChange={e => setTyreThreshold(Number(e.target.value))} className="w-full mt-1 p-1 rounded bg-gray-800 text-white text-xs" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-300">Carburant (kg)</label>
+            <input type="number" min={0} max={100} value={fuelThreshold} onChange={e => setFuelThreshold(Number(e.target.value))} className="w-full mt-1 p-1 rounded bg-gray-800 text-white text-xs" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-300">Durée pit (s)</label>
+            <input type="number" min={1} max={30} value={pitDuration} onChange={e => setPitDuration(Number(e.target.value))} className="w-full mt-1 p-1 rounded bg-gray-800 text-white text-xs" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-300">Pneus au pit</label>
+            <select value={selectedPitCompound} onChange={e => setSelectedPitCompound(e.target.value as TyreCompound)} className="w-full mt-1 p-1 rounded bg-gray-800 text-white text-xs">
+              {tyreOptions.map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <button
+          className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-all mt-2 w-full"
+          onClick={() => onManualPit({ tyreThreshold, fuelThreshold, pitDuration, compound: selectedPitCompound })}
+        >
+          Forcer PIT maintenant
+        </button>
+      </div>
+  {/* ...existing code... */}
       <div className="flex items-center gap-3 mb-4">
         <Calculator size={20} className="text-blue-400" />
         <div>

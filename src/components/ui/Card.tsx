@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, CSSProperties } from 'react';
 import { TeamName } from '../../types/f1';
 
 interface CardProps {
@@ -7,6 +7,7 @@ interface CardProps {
   team?: TeamName;
   glow?: boolean;
   hover?: boolean;
+  style?: CSSProperties;
 }
 
 export const Card = ({ 
@@ -14,14 +15,15 @@ export const Card = ({
   className = '', 
   team,
   glow = false,
-  hover = false 
+  hover = false,
+  style
 }: CardProps) => {
   const teamBorder = team ? `border-l-4 border-[${getTeamColor(team)}]` : 'border-l-4 border-gray-500';
   const glowEffect = glow ? 'shadow-lg' : 'shadow-md';
   const hoverEffect = hover ? 'transition-all duration-300 hover:scale-[1.02] hover:shadow-xl' : '';
   
   return (
-    <div className={`bg-gray-800 rounded-lg p-4 ${teamBorder} ${glowEffect} ${hoverEffect} ${className}`}>
+    <div style={style} className={`bg-gray-800 rounded-lg p-4 ${teamBorder} ${glowEffect} ${hoverEffect} ${className}`}>
       {children}
     </div>
   );
@@ -60,8 +62,6 @@ export const F1DriverCard = ({
   className = '' 
 }: F1CardProps) => {
   const isPodium = position <= 3;
-  const podiumGlow = isPodium ? 'shadow-lg shadow-yellow-500/20' : '';
-  
   return (
     <Card team={team} glow={isPodium} hover={true} className={className}>
       <div className="flex justify-between items-start mb-3">

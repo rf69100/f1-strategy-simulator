@@ -1,18 +1,15 @@
 import { create } from 'zustand';
 import { 
-  SimulationState, 
   Driver, 
   TyreCompound, 
-  SafetyCarStatus, 
   WeatherCondition,
-  TeamName,
   RaceSettings 
 } from '../types/f1';
+import { generateDefaultStrategy } from '../utils/strategyGenerator';
 import { 
   DRIVER_DATA, 
   TEAM_DATA, 
   CIRCUIT_DATA, 
-  TYRE_PERFORMANCE,
   generateRandomIncident,
   generateSafetyCarProbability 
 } from '../utils/f1Data';
@@ -32,6 +29,33 @@ import {
   predictPitStopTime
 } from '../utils/strategy';
 
+export interface PitConfig {
+  tyreThreshold: number;
+  fuelThreshold: number;
+  pitDuration: number;
+  compound?: TyreCompound;
+  setTyreThreshold: (val: number) => void;
+  setFuelThreshold: (val: number) => void;
+  setPitDuration: (val: number) => void;
+}
+
+interface SimulationState {
+  isRaceRunning: boolean;
+  currentLap: number;
+  totalLaps: number;
+  safetyCar: string;
+  weather: WeatherCondition;
+  trackCondition: string;
+  trackTemp: number;
+  airTemp: number;
+  drivers: Driver[];
+  raceSettings: RaceSettings;
+  sessionTime: number;
+  lastLapTimestamp: number;
+  incidents: number;
+  pitConfig: PitConfig;
+}
+
 interface SimulationActions {
   startRace: () => void;
   stopRace: () => void;
@@ -41,15 +65,16 @@ interface SimulationActions {
   toggleSafetyCar: () => void;
   setWeather: (weather: WeatherCondition) => void;
   resetRace: () => void;
-  setPitStop: (driverId: string, compound: TyreCompound, fuel: number) => void;
+  setPitStop: (driverId: string, compound: TyreCompound, fuel: number, pitConfig?: PitConfig) => void;
+  manualPit: (driverId: string, pitConfig: PitConfig) => void;
   setCircuit: (circuitId: string) => void;
   calculateDriverStrategy: (driverId: string) => any;
 }
 
 // Configuration de course basée sur circuit
 const getRaceSettings = (circuitId: string = 'monaco'): RaceSettings => {
+  // Récupération circuit (valeurs utilisées dans le return)
   const circuit = CIRCUIT_DATA[circuitId as keyof typeof CIRCUIT_DATA] || CIRCUIT_DATA.monaco;
-  
   return {
     totalLaps: circuit.laps,
     trackName: circuit.name,
@@ -68,39 +93,41 @@ const getRaceSettings = (circuitId: string = 'monaco'): RaceSettings => {
 // Création des pilotes basée sur les données F1 réelles
 const createInitialDrivers = (circuitId: string = 'monaco'): Driver[] => {
   const drivers: Driver[] = [];
-  const circuit = CIRCUIT_DATA[circuitId as keyof typeof CIRCUIT_DATA] || CIRCUIT_DATA.monaco;
-  
-  // Prendre les 10 premiers pilotes de DRIVER_DATA
+  const raceSettings = getRaceSettings(circuitId);
   Object.entries(DRIVER_DATA).forEach(([driverName, driverData]) => {
     const teamData = TEAM_DATA[driverData.team];
-    const baseLapTime = 90 * (1.1 - (teamData.performance * 0.15)); // 90 secondes de base
-    
+    const baseLapTime = 90 * (1.1 - (teamData.performance * 0.15));
+    const strategy = generateDefaultStrategy(
+      raceSettings.totalLaps,
+      'DRY', // Default, can be updated for weather
+      circuitId
+    );
     drivers.push({
       id: driverName.toLowerCase().replace(' ', '-'),
       name: driverName,
       team: driverData.team,
-      position: 0, // Sera calculé après
-      tyres: { 
-        compound: 'MEDIUM' as TyreCompound, 
+      position: 0,
+      tyres: {
+        compound: strategy[0]?.compound || 'MEDIUM',
         wear: 8 + Math.random() * 15,
         age: 1,
-        degradationRate: getTyreDegradationRate('MEDIUM', teamData.performance, circuitId)
+        degradationRate: getTyreDegradationRate(strategy[0]?.compound || 'MEDIUM', teamData.performance, circuitId)
       },
-      fuel: 95 + Math.random() * 8,
+      fuel: strategy[0]?.fuel || (95 + Math.random() * 8),
       lapTimes: [baseLapTime * (0.98 + Math.random() * 0.04)],
       currentLap: 1,
       pitStops: 0,
       totalTime: baseLapTime,
       status: 'RUNNING',
       gapToLeader: 0,
-      intervalToNext: 0
+      intervalToNext: 0,
+      strategy: strategy
     });
   });
 
-  // Tri initial par performance
   return drivers.sort((a, b) => a.totalTime - b.totalTime)
-    .map((driver, index) => ({ 
-      ...driver, 
+    .map((driver, index) => ({
+      ...driver,
       position: index + 1,
       gapToLeader: index === 0 ? 0 : driver.totalTime - drivers[0].totalTime
     }));
@@ -142,7 +169,7 @@ const simulateOvertakes = (drivers: Driver[], circuitId: string): Driver[] => {
     if (!attackerData || !defenderData) continue;
     
     const tyreDifference = attacker.tyres.wear - defender.tyres.wear;
-    const performanceDiff = attackerTeam.performance - defenderTeam.performance;
+  // const performanceDiff = attackerTeam.performance - defenderTeam.performance; // variable non utilisée volontairement
     const aggressionDiff = attackerData.aggression - defenderData.aggression;
     
     const { success, timeLost } = simulateOvertake(
@@ -188,28 +215,37 @@ export const useSimulationStore = create<SimulationState & SimulationActions>((s
   sessionTime: 0,
   lastLapTimestamp: 0,
   incidents: 0,
-
+  pitConfig: {
+    // Realistic F1 values: Monaco 1–2 stops, other tracks 2–3 stops
+    tyreThreshold: INITIAL_RACE_SETTINGS.circuitId === 'monaco' ? 92 : 88, // pit when tire wear > threshold
+    fuelThreshold: 12, // pit when fuel < threshold (enough for 6–8 laps)
+    pitDuration: 3,
+    setTyreThreshold: (val: number) => set(state => ({ pitConfig: { ...state.pitConfig, tyreThreshold: val } })),
+    setFuelThreshold: (val: number) => set(state => ({ pitConfig: { ...state.pitConfig, fuelThreshold: val } })),
+    setPitDuration: (val: number) => set(state => ({ pitConfig: { ...state.pitConfig, pitDuration: val } })),
+  },
   // === ACTIONS ===
   startRace: () => set({ 
     isRaceRunning: true,
     lastLapTimestamp: Date.now(),
     incidents: 0
   }),
-
   stopRace: () => set({ isRaceRunning: false }),
-
   advanceLap: () => {
     const { drivers, currentLap, isRaceRunning, weather, safetyCar, raceSettings, incidents, trackTemp, airTemp } = get();
     if (!isRaceRunning || currentLap >= raceSettings.totalLaps) return;
 
     const now = Date.now();
-    const circuitData = CIRCUIT_DATA[raceSettings.circuitId as keyof typeof CIRCUIT_DATA] || CIRCUIT_DATA.monaco;
+  // Récupération circuitData (non utilisée directement ici)
+  const _circuitData = CIRCUIT_DATA[raceSettings.circuitId as keyof typeof CIRCUIT_DATA] || CIRCUIT_DATA.monaco;
+  void _circuitData;
 
     let newIncidents = incidents;
     let newSafetyCar = safetyCar;
 
     // Effets température
-    const tempEffects = calculateTemperatureEffects(airTemp, trackTemp, weather);
+  // calculateTemperatureEffects peut être utilisé ultérieurement pour effets visuels
+  void calculateTemperatureEffects(airTemp, trackTemp, weather);
 
     // Évolution de la piste
     const trackEvolution = calculateTrackEvolution(currentLap, raceSettings.totalLaps, weather);
@@ -217,72 +253,105 @@ export const useSimulationStore = create<SimulationState & SimulationActions>((s
     const updatedDrivers = drivers.map(driver => {
       const driverData = DRIVER_DATA[driver.name as keyof typeof DRIVER_DATA];
       const teamData = TEAM_DATA[driver.team];
-      
       if (!driverData || !teamData || driver.status === 'DNF') return driver;
 
       // Vérifier les incidents
       if (generateRandomIncident(currentLap, driverData.aggression)) {
-        newIncidents++;
-        console.log(`🚨 Incident pour ${driver.name}!`);
+          newIncidents++;
+          console.log(`🚨 Incident pour ${driver.name}!`);
+          return {
+            ...driver,
+            status: 'DNF',
+            currentLap: driver.currentLap + 1
+          };
+        }
+
+        // Facteurs pour calcul temps au tour
+        const lapTimeFactors: LapTimeFactors = {
+          tyreWear: driver.tyres.wear,
+          fuelLoad: driver.fuel,
+          trackEvolution,
+          driverPerformance: (Math.random() - 0.5) * 2 * (1 - driverData.consistency),
+          weatherImpact: getWeatherMultiplier(weather),
+          traffic: Math.random() * 0.3,
+          carPerformance: teamData.performance,
+          tyreCompound: driver.tyres.compound,
+          drsEffect: Math.random() > 0.6 ? 1 : 0
+        };
+
+        const baseLapTime = 90;
+        const lapTime = calculateLapTime(baseLapTime, lapTimeFactors, raceSettings.circuitId);
+        const newWear = calculateTyreWear(
+          driver.tyres.compound,
+          driver.tyres.wear,
+          trackTemp,
+          driverData.aggression,
+          raceSettings.circuitId
+        );
+        const fuelConsumption = calculateFuelConsumption(
+          BASE_FUEL_CONSUMPTION,
+          weather,
+          safetyCar === 'SC',
+          safetyCar === 'VSC',
+          raceSettings.circuitId
+        );
+        const fuelAfter = Math.max(0, driver.fuel - fuelConsumption);
+        const { tyreThreshold, fuelThreshold, pitDuration } = get().pitConfig;
+
+        // Find next stint in strategy
+        let nextStintIdx = 0;
+        let lapsDone = driver.currentLap;
+        if (driver.strategy && driver.strategy.length > 0) {
+          let lapSum = 0;
+          for (let i = 0; i < driver.strategy.length; i++) {
+            lapSum += driver.strategy[i].laps;
+            if (lapsDone < lapSum) {
+              nextStintIdx = i;
+              break;
+            }
+          }
+        }
+        const nextStint = driver.strategy?.[nextStintIdx];
+        const needsPitNow = driver.status === 'RUNNING' && (newWear > tyreThreshold || fuelAfter < fuelThreshold);
+        if (needsPitNow && nextStint) {
+          const newCompound = nextStint.compound;
+          const fuelToAdd = Math.max(0, nextStint.fuel - fuelAfter);
+          get().setPitStop(driver.id, newCompound, fuelToAdd, get().pitConfig);
+          return {
+            ...driver,
+            currentLap: driver.currentLap + 1,
+            tyres: {
+              compound: newCompound,
+              wear: 0,
+              age: 0,
+              degradationRate: getTyreDegradationRate(newCompound, teamData.performance, raceSettings.circuitId)
+            },
+            fuel: Math.min(100, fuelAfter + fuelToAdd),
+            lapTimes: [...driver.lapTimes, lapTime],
+            totalTime: driver.totalTime + lapTime + pitDuration,
+            pitStops: driver.pitStops + 1,
+            status: 'PIT'
+          };
+        }
+
         return {
           ...driver,
-          status: 'DNF',
-          currentLap: driver.currentLap + 1
+          currentLap: driver.currentLap + 1,
+          tyres: {
+            ...driver.tyres,
+            wear: newWear,
+            age: driver.tyres.age + 1
+          },
+          fuel: fuelAfter,
+          lapTimes: [...driver.lapTimes, lapTime],
+          totalTime: driver.totalTime + lapTime,
+          status: driver.status
         };
-      }
+      });
 
-      // Facteurs pour calcul temps au tour
-      const lapTimeFactors: LapTimeFactors = {
-        tyreWear: driver.tyres.wear,
-        fuelLoad: driver.fuel,
-        trackEvolution,
-        driverPerformance: (Math.random() - 0.5) * 2 * (1 - driverData.consistency),
-        weatherImpact: getWeatherMultiplier(weather),
-        traffic: Math.random() * 0.3, // Simulation traffic
-        carPerformance: teamData.performance,
-        tyreCompound: driver.tyres.compound,
-        drsEffect: Math.random() > 0.6 ? 1 : 0 // DRS aléatoire
-      };
-
-      // Calcul du temps au tour réaliste
-      const baseLapTime = 90; // Temps de base en secondes
-      const lapTime = calculateLapTime(baseLapTime, lapTimeFactors, raceSettings.circuitId);
-
-      // Calcul usure pneus réaliste
-      const newWear = calculateTyreWear(
-        driver.tyres.compound,
-        driver.tyres.wear,
-        trackTemp,
-        driverData.aggression,
-        raceSettings.circuitId
-      );
-
-      // Consommation carburant réaliste
-      const fuelConsumption = calculateFuelConsumption(
-        BASE_FUEL_CONSUMPTION,
-        weather,
-        safetyCar === 'SC',
-        safetyCar === 'VSC',
-        raceSettings.circuitId
-      );
-
-      return {
-        ...driver,
-        currentLap: driver.currentLap + 1,
-        tyres: {
-          ...driver.tyres,
-          wear: newWear,
-          age: driver.tyres.age + 1
-        },
-        fuel: Math.max(0, driver.fuel - fuelConsumption),
-        lapTimes: [...driver.lapTimes, lapTime],
-        totalTime: driver.totalTime + lapTime,
-        status: driver.status === 'PIT' ? 'RUNNING' : driver.status
-      };
-    });
-
-    // Simulation des dépassements
-    let driversWithOvertakes = simulateOvertakes(updatedDrivers, raceSettings.circuitId);
+  // Simulation des dépassements
+  // caster pour satisfaire la signature attendue (parfois l'inférence TS devient plus large)
+  let driversWithOvertakes = simulateOvertakes(updatedDrivers as unknown as Driver[], raceSettings.circuitId);
 
     // Vérifier safety car
     if (newSafetyCar === 'NONE' && generateSafetyCarProbability(currentLap, newIncidents) > Math.random()) {
@@ -327,7 +396,6 @@ export const useSimulationStore = create<SimulationState & SimulationActions>((s
       airTemp: airTemp + (Math.random() - 0.5) * 1 // Variation température air
     });
   },
-
   changeTyre: (driverId, compound) => {
     const { drivers, raceSettings } = get();
     const driver = drivers.find(d => d.id === driverId);
@@ -352,7 +420,6 @@ export const useSimulationStore = create<SimulationState & SimulationActions>((s
       )
     });
   },
-
   addFuel: (driverId, amount) => {
     const { drivers } = get();
     set({
@@ -363,7 +430,6 @@ export const useSimulationStore = create<SimulationState & SimulationActions>((s
       )
     });
   },
-
   toggleSafetyCar: () => {
     const { safetyCar } = get();
     const newSafetyCar = safetyCar === 'NONE' ? 'SC' : safetyCar === 'SC' ? 'VSC' : 'NONE';
@@ -371,7 +437,6 @@ export const useSimulationStore = create<SimulationState & SimulationActions>((s
       safetyCar: newSafetyCar 
     });
   },
-
   setWeather: (weather) => {
     const newTrackCondition = weather === 'WET' ? 'WET' : weather === 'DRIZZLE' ? 'DRYING' : 'DRY';
     const newTrackTemp = weather === 'WET' ? 25 : weather === 'DRIZZLE' ? 30 : 42;
@@ -384,8 +449,7 @@ export const useSimulationStore = create<SimulationState & SimulationActions>((s
       airTemp: newAirTemp
     });
   },
-
-  setCircuit: (circuitId: string) => {
+  setCircuit: (circuitId) => {
     const newRaceSettings = getRaceSettings(circuitId);
     const newDrivers = createInitialDrivers(circuitId);
     const circuit = CIRCUIT_DATA[circuitId as keyof typeof CIRCUIT_DATA] || CIRCUIT_DATA.monaco;
@@ -405,8 +469,7 @@ export const useSimulationStore = create<SimulationState & SimulationActions>((s
       airTemp: 28
     });
   },
-
-  calculateDriverStrategy: (driverId: string) => {
+  calculateDriverStrategy: (driverId) => {
     const { drivers, totalLaps, weather, raceSettings } = get();
     const driver = drivers.find(d => d.id === driverId);
     if (!driver) return null;
@@ -421,20 +484,21 @@ export const useSimulationStore = create<SimulationState & SimulationActions>((s
       raceSettings.circuitId
     );
   },
-
-  setPitStop: (driverId, compound, fuel) => {
+  setPitStop: (driverId, compound, fuel, pitConfig) => {
+  console.log(`[DEBUG] PITSTOP for ${driverId}: compound=${compound}, fuel=${fuel}`);
+    // pitConfig: { pitDuration: number } (seconds)
     const { drivers, raceSettings } = get();
     const driver = drivers.find(d => d.id === driverId);
     if (!driver) return;
 
     const teamData = TEAM_DATA[driver.team];
-    const pitStopTime = predictPitStopTime(compound, fuel, teamData);
+    const pitStopTime = pitConfig?.pitDuration || predictPitStopTime(compound, fuel, teamData);
     
     set({
       drivers: drivers.map(driver => 
         driver.id === driverId 
           ? { 
-              ...driver, 
+              ...driver,  
               tyres: { 
                 compound, 
                 wear: 0, 
@@ -450,7 +514,7 @@ export const useSimulationStore = create<SimulationState & SimulationActions>((s
       )
     });
 
-    // Remet le statut à RUNNING après un pit stop
+    // Remet le statut à RUNNING après un pit stop — utiliser la durée configurée
     setTimeout(() => {
       const { drivers } = get();
       set({
@@ -458,9 +522,18 @@ export const useSimulationStore = create<SimulationState & SimulationActions>((s
           driver.id === driverId ? { ...driver, status: 'RUNNING' } : driver
         )
       });
-    }, 3000);
+    }, pitStopTime * 1000);
   },
-
+  manualPit: (driverId, pitConfig) => {
+  // Use selected compound, add fuel to threshold, use pitConfig duration
+  const { drivers } = get();
+  const driver = drivers.find(d => d.id === driverId);
+  if (!driver) return;
+  // Use selected compound from pitConfig
+  const compound = pitConfig.compound || driver.tyres.compound;
+  const fuelToAdd = Math.max(0, pitConfig.fuelThreshold - driver.fuel);
+  get().setPitStop(driverId, compound, fuelToAdd, pitConfig);
+  },
   resetRace: () => {
     const { raceSettings } = get();
     set({

@@ -1,4 +1,4 @@
-import { TyreCompound, Driver, RaceStrategy, PitStop, WeatherCondition, TeamName } from '../types/f1';
+import { TyreCompound, Driver, RaceStrategy, PitStop, WeatherCondition } from '../types/f1';
 import { TYRE_PERFORMANCE, CIRCUIT_DATA, TEAM_DATA, DRIVER_DATA } from './f1Data';
 
 // === STRATÉGIES DE BASE AVEC DONNÉES F1 ===
@@ -273,7 +273,7 @@ const chooseOptimalCompound = (
   preferred: TyreCompound,
   remaining: Record<TyreCompound, number>,
   stintLength: number,
-  circuit: any
+  _circuit: any
 ): TyreCompound => {
   // Vérifier d'abord le compound préféré
   if (remaining[preferred] > 0) {
@@ -347,7 +347,7 @@ const calculateFuelForStint = (stintLaps: number, circuit: any): number => {
   return Math.min(100, stintLaps * baseConsumption * circuit.fuelEffect);
 };
 
-const calculateStintTime = (laps: number, compound: TyreCompound, circuit: any, driver: Driver): number => {
+const calculateStintTime = (laps: number, compound: TyreCompound, _circuit: any, _driver: Driver): number => {
   const baseLapTime = 90; // Temps de base en secondes
   const tyrePerf = TYRE_PERFORMANCE[compound];
   const adjustedLapTime = baseLapTime * (1.1 - (tyrePerf.grip * 0.2));
@@ -355,7 +355,7 @@ const calculateStintTime = (laps: number, compound: TyreCompound, circuit: any, 
   return laps * adjustedLapTime;
 };
 
-const calculateWetLapTime = (circuit: any, compound: TyreCompound): number => {
+const calculateWetLapTime = (_circuit: any, compound: TyreCompound): number => {
   const baseLapTime = 90; // Temps de base en secondes
   const wetMultiplier = compound === 'WET' ? 1.35 : 1.15;
   return baseLapTime * wetMultiplier;
@@ -365,7 +365,7 @@ const calculateExpectedRaceTime = (
   driver: Driver, 
   pitStops: PitStop[], 
   lapsRemaining: number, 
-  circuit: any, 
+  _circuit: any, 
   weather: WeatherCondition
 ): number => {
   let totalTime = driver.totalTime || 0;

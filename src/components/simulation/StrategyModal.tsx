@@ -3,15 +3,20 @@ import { Modal } from '../ui/Modal';
 import { Card } from '../ui/Card';
 import { Calculator, TrendingUp, Clock, Zap, Target, Award } from 'lucide-react';
 import { useStrategy } from '../../hooks/useStrategy';
+import { StintHistory } from './StintHistory';
 import { TyreCompound } from '../../types/f1';
+
+import { PitConfig } from '../../stores/simulationStore';
 
 interface StrategyModalProps {
   isOpen: boolean;
   onClose: () => void;
   driverId: string;
+  manualPit?: (driverId: string, pitConfig: PitConfig) => void;
+  pitConfig?: PitConfig;
 }
 
-export const StrategyModal = ({ isOpen, onClose, driverId }: StrategyModalProps) => {
+export const StrategyModal = ({ isOpen, onClose, driverId, manualPit, pitConfig }: StrategyModalProps) => {
   const {
     driver,
     activeStrategy,
@@ -64,7 +69,7 @@ export const StrategyModal = ({ isOpen, onClose, driverId }: StrategyModalProps)
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Colonne 1: État actuel */}
         <div className="lg:col-span-1">
           <Card className="p-4 mb-4">
@@ -132,9 +137,20 @@ export const StrategyModal = ({ isOpen, onClose, driverId }: StrategyModalProps)
                 <p className="text-gray-200 text-xs">
                   {pitStopRecommendation.reason}
                 </p>
+                {/* Manual PIT button if available */}
+                {manualPit && pitConfig && (
+                  <button
+                    className="mt-3 w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-all"
+                    onClick={() => manualPit(driverId, pitConfig)}
+                  >
+                    Forcer PIT maintenant
+                  </button>
+                )}
               </div>
             </div>
           </Card>
+          {/* Ajout du composant StintHistory */}
+          <StintHistory driver={driver} />
 
           {/* Analyse performance */}
           <Card className="p-4">
@@ -291,7 +307,7 @@ export const StrategyModal = ({ isOpen, onClose, driverId }: StrategyModalProps)
                 <div>
                   <h5 className="text-sm text-gray-400 mb-2">Arrêts prévus</h5>
                   <div className="space-y-2">
-                    {optimalStrategy.pitStops?.map((stop, index) => (
+                    {optimalStrategy.pitStops?.map((stop: any, index: number) => (
                       <div key={index} className="flex items-center justify-between p-2 bg-gray-700/50 rounded">
                         <div className="flex items-center gap-2">
                           <Clock size={12} className="text-gray-400" />
