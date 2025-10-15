@@ -176,8 +176,8 @@ const simulateOvertakes = (drivers: Driver[], circuitId: string): Driver[] => {
       attackerTeam.performance + aggressionDiff,
       defenderTeam.performance,
       tyreDifference,
-      Math.random() > 0.7, // DRS disponible aléatoirement
-      circuit.corners > 15 ? 0.7 : 0.3 // Approximation difficulté dépassement
+      Math.random() > 0.5, // DRS disponible plus souvent
+      circuit.corners > 15 ? 0.85 : 0.5 // Plus de dépassements
     );
     
     if (success) {
@@ -257,14 +257,25 @@ export const useSimulationStore = create<SimulationState & SimulationActions>((s
 
       // Vérifier les incidents
       if (generateRandomIncident(currentLap, driverData.aggression)) {
-          newIncidents++;
-          console.log(`🚨 Incident pour ${driver.name}!`);
+        newIncidents++;
+        if (Math.random() < 0.7) { // 70% de chance que ce soit un DNF
+          console.log(`🚨 DNF pour ${driver.name}!`);
           return {
             ...driver,
             status: 'DNF',
             currentLap: driver.currentLap + 1
           };
+        } else {
+          // Incident mineur : temps perdu
+          const timeLost = 5 + Math.random() * 10;
+          console.log(`⚠️ Incident mineur pour ${driver.name}, +${timeLost.toFixed(1)}s`);
+          return {
+            ...driver,
+            totalTime: driver.totalTime + timeLost,
+            currentLap: driver.currentLap + 1
+          };
         }
+      }
 
         // Facteurs pour calcul temps au tour
         const lapTimeFactors: LapTimeFactors = {
@@ -279,7 +290,7 @@ export const useSimulationStore = create<SimulationState & SimulationActions>((s
           drsEffect: Math.random() > 0.6 ? 1 : 0
         };
 
-        const baseLapTime = 90;
+  const baseLapTime = 5;
         const lapTime = calculateLapTime(baseLapTime, lapTimeFactors, raceSettings.circuitId);
         const newWear = calculateTyreWear(
           driver.tyres.compound,
@@ -364,7 +375,13 @@ export const useSimulationStore = create<SimulationState & SimulationActions>((s
 
     // Tri par temps total pour les positions (sauf DNF)
     const activeDrivers = driversWithOvertakes.filter(d => d.status !== 'DNF');
-    const sortedDrivers = [...activeDrivers].sort((a, b) => a.totalTime - b.totalTime);
+    // Trie d'abord par nombre de tours complétés (décroissant), puis par temps total
+    const sortedDrivers = [...activeDrivers].sort((a, b) => {
+      if (b.currentLap !== a.currentLap) {
+        return b.currentLap - a.currentLap;
+      }
+      return a.totalTime - b.totalTime;
+    });
     
     // Calcul des écarts
     const leaderTime = sortedDrivers[0]?.totalTime || 0;

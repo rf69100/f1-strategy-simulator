@@ -70,6 +70,13 @@ export const DriverCard: React.FC<DriverCardProps> = ({
         </div>
       )}
 
+      {/* Badge Leader permanent */}
+      {driver.position === 1 && (
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-yellow-500 text-black text-xs px-3 py-1 rounded-full font-bold shadow z-10" style={{letterSpacing:2}}>
+          LEADER
+        </div>
+      )}
+
       {/* Header avec statut et données équipe */}
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1 min-w-0">

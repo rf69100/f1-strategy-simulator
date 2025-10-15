@@ -30,11 +30,11 @@ export const PitWall = () => {
   const leader = getLeader();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black p-4 pb-20 sm:pb-6">
-      <div className="max-w-8xl mx-auto">
+  <div className="w-full px-2 md:px-8 pt-10 pb-20 bg-gradient-to-br from-black via-gray-900 to-red-900 min-h-screen flex flex-col items-center">
+  <div className="w-full max-w-8xl mx-auto flex flex-col items-center">
         
         {/* HEADER AMÉLIORÉ */}
-        <div className="bg-gray-800 rounded-lg p-4 mb-6">
+          <div className="bg-gray-800 rounded-2xl p-6 mb-10 w-full max-w-6xl mx-auto">
           <div className="flex flex-col lg:flex-row justify-between items-center gap-4">
             
             {/* Titre et Circuit */}
@@ -133,7 +133,7 @@ export const PitWall = () => {
         )}
 
         {/* GRILLE DES 20 PILOTES CORRIGÉE */}
-        <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 xs:gap-4">
+          <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8 xs:gap-10 py-6 w-full max-w-7xl mx-auto justify-center">
           {drivers.map((driver) => (
             <DriverCard 
               key={driver.id} 

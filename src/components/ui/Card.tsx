@@ -23,7 +23,7 @@ export const Card = ({
   const hoverEffect = hover ? 'transition-all duration-300 hover:scale-[1.02] hover:shadow-xl' : '';
   
   return (
-    <div style={style} className={`bg-gray-800 rounded-lg p-4 ${teamBorder} ${glowEffect} ${hoverEffect} ${className}`}>
+  <div style={style} className={`bg-gradient-to-br from-black via-gray-900 to-gray-800 rounded-2xl p-6 shadow-xl border border-gray-700 ${teamBorder} ${glowEffect} ${hoverEffect} ${className}`}>
       {children}
     </div>
   );

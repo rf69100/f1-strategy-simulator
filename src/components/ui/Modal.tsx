@@ -26,13 +26,13 @@ export const Modal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
       <div 
-        className={`bg-gray-800 rounded-xl shadow-2xl w-full ${sizeClasses[size]} transform transition-all duration-300 scale-100 opacity-100`}
+  className={`bg-gradient-to-br from-black via-gray-900 to-gray-800 rounded-2xl shadow-2xl w-full border border-gray-700 ${sizeClasses[size]} transform transition-all duration-300 scale-100 opacity-100`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-700">
+  <div className="flex items-center justify-between p-8 border-b border-gray-700">
           <h2 className="text-xl font-bold text-white">{title}</h2>
           <button
             onClick={onClose}
@@ -43,7 +43,7 @@ export const Modal = ({
         </div>
 
         {/* Content */}
-        <div className="p-6 max-h-[70vh] overflow-y-auto">
+  <div className="p-8 max-h-[70vh] overflow-y-auto space-y-6">
           {children}
         </div>
       </div>

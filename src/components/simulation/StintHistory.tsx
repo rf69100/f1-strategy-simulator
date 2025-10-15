@@ -26,12 +26,12 @@ function getStintHistory(driver: Driver): Stint[] {
 export const StintHistory: React.FC<StintHistoryProps> = ({ driver }) => {
   const stints = getStintHistory(driver);
   return (
-    <div className="bg-gray-900 rounded-lg p-4 border border-gray-700 mb-4">
-      <h4 className="text-lg font-bold text-white mb-2">Historique des Stints</h4>
-      <div className="space-y-2">
+  <div className="bg-gradient-to-br from-black via-gray-900 to-gray-800 rounded-2xl p-6 border border-gray-700 mb-8 shadow-xl">
+  <h4 className="text-2xl font-extrabold text-white mb-4 tracking-wide drop-shadow-lg">Historique des Stints</h4>
+  <div className="space-y-4">
         {stints.map((stint, idx) => (
-          <div key={idx} className="flex items-center gap-4 text-sm">
-            <span className={`px-2 py-1 rounded font-bold ${
+          <div key={idx} className="flex items-center gap-6 text-base">
+            <span className={`px-3 py-2 rounded-full font-bold shadow-lg text-lg ${
               stint.compound === 'SOFT' ? 'bg-red-500 text-white' :
               stint.compound === 'MEDIUM' ? 'bg-yellow-500 text-black' :
               stint.compound === 'HARD' ? 'bg-white text-black' :

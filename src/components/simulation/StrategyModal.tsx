@@ -54,46 +54,46 @@ export const StrategyModal = ({ isOpen, onClose, driverId, manualPit, pitConfig 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="STRATÉGIE DE COURSE" size="xl">
       {/* En-tête Pilote */}
-      <div className="mb-6 p-4 bg-gradient-to-r from-gray-800 to-black rounded-lg border border-gray-600">
-        <div className="flex items-center justify-between">
+  <div className="mb-8 p-6 bg-gradient-to-br from-black via-gray-900 to-gray-800 rounded-2xl border border-gray-700 shadow-xl">
+  <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
-            <h3 className="text-xl font-bold text-white">{driver.name}</h3>
-            <p className="text-gray-300" style={{ color: teamData?.color || '#666666' }}>
+            <h3 className="text-2xl font-extrabold text-white tracking-wide drop-shadow-lg">{driver.name}</h3>
+            <p className="text-gray-300 text-lg font-semibold" style={{ color: teamData?.color || '#666666' }}>
               {driver.team} • P{driver.position}
             </p>
           </div>
-          <div className="text-right">
-            <div className="text-sm text-gray-400">Performance</div>
-            <div className="text-white font-bold">{Math.round((teamData?.performance || 0.8) * 100)}%</div>
+          <div className="text-right mt-2">
+            <div className="text-base text-gray-400">Performance</div>
+            <div className="text-white font-bold text-lg">{Math.round((teamData?.performance || 0.8) * 100)}%</div>
           </div>
         </div>
       </div>
 
-  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Colonne 1: État actuel */}
         <div className="lg:col-span-1">
-          <Card className="p-4 mb-4">
-            <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+          <Card className="p-6 mb-6">
+            <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-3 tracking-wide">
               <Calculator size={16} />
               ÉTAT ACTUEL
             </h4>
             
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-400 text-sm">Pneus actuels</span>
-                <div className={`px-2 py-1 rounded text-xs font-bold ${getTyreColor(driver.tyres.compound)}`}>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center gap-2">
+                <span className="text-gray-400 text-base">Pneus actuels</span>
+                <div className={`px-3 py-2 rounded-full text-base font-bold shadow-lg ${getTyreColor(driver.tyres.compound)}`}>
                   {driver.tyres.compound}
                 </div>
               </div>
 
               <div>
-                <div className="flex justify-between text-sm text-gray-400 mb-1">
+                <div className="flex justify-between text-base text-gray-400 mb-2">
                   <span>Usure pneus</span>
                   <span>{Math.round(driver.tyres.wear)}%</span>
                 </div>
-                <div className="w-full bg-gray-700 rounded-full h-2">
+                <div className="w-full bg-gray-700 rounded-full h-3">
                   <div 
-                    className={`h-2 rounded-full ${
+                    className={`h-3 rounded-full ${
                       driver.tyres.wear < 30 ? 'bg-green-500' :
                       driver.tyres.wear < 70 ? 'bg-yellow-500' : 'bg-red-500'
                     }`}
@@ -103,13 +103,13 @@ export const StrategyModal = ({ isOpen, onClose, driverId, manualPit, pitConfig 
               </div>
 
               <div>
-                <div className="flex justify-between text-sm text-gray-400 mb-1">
+                <div className="flex justify-between text-base text-gray-400 mb-2">
                   <span>Carburant</span>
                   <span>{driver.fuel.toFixed(1)} kg</span>
                 </div>
-                <div className="w-full bg-gray-700 rounded-full h-2">
+                <div className="w-full bg-gray-700 rounded-full h-3">
                   <div 
-                    className="bg-blue-500 h-2 rounded-full"
+                    className="bg-blue-500 h-3 rounded-full"
                     style={{ width: `${driver.fuel}%` }}
                   />
                 </div>
