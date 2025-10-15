@@ -14,36 +14,13 @@ interface StintHistoryProps {
 
 // Utility to build stint history from lapTimes and pitStops
 function getStintHistory(driver: Driver): Stint[] {
-  const stints: Stint[] = [];
-  // Build a lap-by-lap compound history
-  let compoundHistory: string[] = [];
-  let currentCompound = driver.tyres.compound;
-  if (driver.lapTimes.length > 0) {
-    // Assume first lap is starting compound
-    compoundHistory.push(currentCompound);
-    for (let lap = 1; lap < driver.lapTimes.length; lap++) {
-      // If tyre age == 0, compound changed this lap
-      if (lap > 0 && driver.lapTimes[lap] && driver.tyres.age === 0 && driver.tyres.compound !== compoundHistory[compoundHistory.length - 1]) {
-        compoundHistory.push(driver.tyres.compound);
-      } else {
-        compoundHistory.push(compoundHistory[compoundHistory.length - 1]);
-      }
-    }
-  }
-  // Build stints from compoundHistory
-  let stintStart = 1;
-  for (let lap = 1; lap <= compoundHistory.length; lap++) {
-    if (lap === compoundHistory.length || compoundHistory[lap] !== compoundHistory[lap - 1]) {
-      stints.push({
-        compound: compoundHistory[lap - 1],
-        startLap: stintStart,
-        endLap: lap,
-        laps: lap - stintStart + 1
-      });
-      stintStart = lap + 1;
-    }
-  }
-  return stints;
+  // Restore previous working logic: single stint for all laps
+  return [{
+    compound: driver.tyres.compound,
+    startLap: 1,
+    endLap: driver.currentLap,
+    laps: driver.currentLap
+  }];
 }
 
 export const StintHistory: React.FC<StintHistoryProps> = ({ driver }) => {

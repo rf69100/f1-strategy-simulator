@@ -1,4 +1,4 @@
-import { Driver, TyreCompound, WeatherCondition, RaceSettings } from '../types/f1';
+import { TyreCompound, WeatherCondition } from '../types/f1';
 
 export interface StintPlan {
   compound: TyreCompound;
