@@ -2,17 +2,19 @@ import { TeamName, TyreCompound } from '../types/f1';
 
 // === DONNÉES F1 RÉELLES 2026 ===
 
-export const TEAM_DATA: Record<TeamName, { color: string; performance: number; reliability: number }> = {
-  'Red Bull': { color: '#0600EF', performance: 0.95, reliability: 0.92 },
-  'Mercedes': { color: '#00D2BE', performance: 0.90, reliability: 0.95 },
-  'Ferrari': { color: '#DC0000', performance: 0.92, reliability: 0.88 },
-  'McLaren': { color: '#FF8700', performance: 0.88, reliability: 0.90 },
-  'Alpine': { color: '#0090FF', performance: 0.85, reliability: 0.87 },
-  'Aston Martin': { color: '#006F62', performance: 0.87, reliability: 0.85 },
-  'Sauber': { color: '#900000', performance: 0.82, reliability: 0.89 }, // Anciennement Alfa Romeo
-  'Haas': { color: '#FFFFFF', performance: 0.80, reliability: 0.83 },
-  'RB': { color: '#2B4562', performance: 0.83, reliability: 0.86 },
-  'Williams': { color: '#005AFF', performance: 0.81, reliability: 0.84 }
+import { TeamData } from '../types/f1';
+
+export const TEAM_DATA: Record<TeamName, TeamData> = {
+  'Red Bull': { color: '#0600EF', performance: 0.95, reliability: 0.92, pitstop: 1.0 },
+  'Mercedes': { color: '#00D2BE', performance: 0.90, reliability: 0.95, pitstop: 0.98 },
+  'Ferrari': { color: '#DC0000', performance: 0.92, reliability: 0.88, pitstop: 1.03 },
+  'McLaren': { color: '#FF8700', performance: 0.88, reliability: 0.90, pitstop: 1.05 },
+  'Alpine': { color: '#0090FF', performance: 0.85, reliability: 0.87, pitstop: 1.08 },
+  'Aston Martin': { color: '#006F62', performance: 0.87, reliability: 0.85, pitstop: 1.07 },
+  'Sauber': { color: '#900000', performance: 0.82, reliability: 0.89, pitstop: 1.10 },
+  'Haas': { color: '#FFFFFF', performance: 0.80, reliability: 0.83, pitstop: 1.12 },
+  'RB': { color: '#2B4562', performance: 0.83, reliability: 0.86, pitstop: 1.09 },
+  'Williams': { color: '#005AFF', performance: 0.81, reliability: 0.84, pitstop: 1.15 }
 };
 
 export const DRIVER_DATA: Record<string, { team: TeamName; aggression: number; consistency: number }> = {

@@ -508,9 +508,17 @@ export const useSimulationStore = create<SimulationState & SimulationActions>((s
     const driver = drivers.find(d => d.id === driverId);
     if (!driver) return;
 
-    const teamData = TEAM_DATA[driver.team];
-    const pitStopTime = pitConfig?.pitDuration || predictPitStopTime(compound, fuel, teamData);
-    
+    const pitBase = 2.2; // Temps moyen pit stop F1 (sec, pneus uniquement)
+  const teamDataLocal = TEAM_DATA[driver.team];
+  const teamPitFactor = teamDataLocal?.pitstop || 1.05; // Mercedes < Williams
+  let pitStopTime = pitBase * teamPitFactor;
+  // Ajout du carburant : +0.04s par kg
+  if (fuel > 0) pitStopTime += fuel * 0.04;
+  // Facteur chance : 10% slow stop (+0.5 à +2s)
+  if (Math.random() < 0.10) pitStopTime += 0.5 + Math.random() * 1.5;
+  // Facteur incident rare : 2% très gros problème (+3 à +8s)
+  if (Math.random() < 0.02) pitStopTime += 3 + Math.random() * 5;
+
     set({
       drivers: drivers.map(driver => 
         driver.id === driverId 
@@ -520,7 +528,7 @@ export const useSimulationStore = create<SimulationState & SimulationActions>((s
                 compound, 
                 wear: 0, 
                 age: 0,
-                degradationRate: getTyreDegradationRate(compound, teamData?.performance || 0.8, raceSettings.circuitId)
+                degradationRate: getTyreDegradationRate(compound, teamDataLocal?.performance || 0.8, raceSettings.circuitId)
               },
               fuel: Math.min(100, driver.fuel + fuel),
               pitStops: driver.pitStops + 1,

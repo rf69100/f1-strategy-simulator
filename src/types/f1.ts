@@ -4,6 +4,13 @@ export type SafetyCarStatus = 'NONE' | 'SC' | 'VSC';
 export type WeatherCondition = 'DRY' | 'DRIZZLE' | 'WET';
 export type TrackCondition = 'DRY' | 'WET' | 'DRYING';
 export type TeamName = 'Red Bull' | 'Mercedes' | 'Ferrari' | 'McLaren' | 'Alpine' | 'Aston Martin' | 'Sauber' | 'Haas' | 'RB' | 'Williams';
+
+export interface TeamData {
+  color: string;
+  performance: number;
+  reliability: number;
+  pitstop: number;
+}
 export type DriverStatus = 'RUNNING' | 'DNF' | 'PIT' | 'OUT';
 
 // === INTERFACES PRINCIPALES ===
