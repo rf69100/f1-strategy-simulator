@@ -28,6 +28,14 @@ export const PitWall = () => {
 
   const progress = (currentLap / totalLaps) * 100;
   const leader = getLeader();
+  // Trouver le pilote ayant fait le meilleur tour
+  const bestLapDriver = drivers.reduce((best, d) => {
+    const minLap = Math.min(...d.lapTimes);
+    if (!best || minLap < best.bestLap) {
+      return { name: d.name, bestLap: minLap };
+    }
+    return best;
+  }, null);
 
   return (
   <div className="w-full px-2 md:px-8 pt-10 pb-20 bg-gradient-to-br from-black via-gray-900 to-red-900 min-h-screen flex flex-col items-center">
@@ -63,28 +71,37 @@ export const PitWall = () => {
             </div>
             
             {/* Barre de Progression et Leader */}
-            <div className="w-full lg:w-80 space-y-3">
-              <div className="bg-black/30 rounded-lg p-3">
-                <div className="flex justify-between text-sm text-gray-400 mb-2">
-                  <span>Progression</span>
-                  <span>{Math.round(progress)}%</span>
+              <div className="w-full lg:w-80 flex flex-col lg:flex-row gap-3">
+                <div className="space-y-3 flex-1">
+                  <div className="bg-black/30 rounded-lg p-3">
+                    <div className="flex justify-between text-sm text-gray-400 mb-2">
+                      <span>Progression</span>
+                      <span>{Math.round(progress)}%</span>
+                    </div>
+                    <div className="w-full bg-black/50 rounded-full h-3">
+                      <div 
+                        className="bg-gradient-to-r from-red-600 to-red-400 h-3 rounded-full transition-all duration-500 shadow-lg shadow-red-500/20"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
+                  {leader && (
+                    <div className="bg-black/30 rounded-lg p-3 text-center">
+                      <div className="text-xs text-gray-400">LEADER</div>
+                      <div className="text-white font-bold text-lg">{leader.name}</div>
+                      <div className="text-red-400 text-sm">P1 • +0.000s</div>
+                    </div>
+                  )}
                 </div>
-                <div className="w-full bg-black/50 rounded-full h-3">
-                  <div 
-                    className="bg-gradient-to-r from-red-600 to-red-400 h-3 rounded-full transition-all duration-500 shadow-lg shadow-red-500/20"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
+                {/* Encadré meilleur tour */}
+                {bestLapDriver && (
+                  <div className="bg-black/30 rounded-lg p-3 text-center flex-1">
+                    <div className="text-xs text-gray-400">MEILLEUR TOUR</div>
+                    <div className="text-white font-bold text-lg">{bestLapDriver.name}</div>
+                    <div className="text-green-400 text-sm">{bestLapDriver.bestLap.toFixed(3)}s</div>
+                  </div>
+                )}
               </div>
-              
-              {leader && (
-                <div className="bg-black/30 rounded-lg p-3 text-center">
-                  <div className="text-xs text-gray-400">LEADER</div>
-                  <div className="text-white font-bold text-lg">{leader.name}</div>
-                  <div className="text-red-400 text-sm">P1 • +0.000s</div>
-                </div>
-              )}
-            </div>
             
             {/* Contrôles Principaux */}
             <div className="flex flex-wrap justify-center gap-2">

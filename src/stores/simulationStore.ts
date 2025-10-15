@@ -377,9 +377,17 @@ export const useSimulationStore = create<SimulationState & SimulationActions>((s
     const activeDrivers = driversWithOvertakes.filter(d => d.status !== 'DNF');
     // Trie d'abord par nombre de tours complétés (décroissant), puis par temps total
     const sortedDrivers = [...activeDrivers].sort((a, b) => {
+      // Plus de tours = mieux classé
       if (b.currentLap !== a.currentLap) {
         return b.currentLap - a.currentLap;
       }
+      // Meilleur temps au tour = mieux classé
+      const aBestLap = Math.min(...a.lapTimes);
+      const bBestLap = Math.min(...b.lapTimes);
+      if (aBestLap !== bBestLap) {
+        return aBestLap - bBestLap;
+      }
+      // Sinon, temps total
       return a.totalTime - b.totalTime;
     });
     

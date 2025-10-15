@@ -5,7 +5,7 @@ export default function Home({ onPlay }: { onPlay: () => void }) {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-black via-gray-900 to-red-900 text-white px-4 py-8">
       <title>F1 Strategy Simulator - Accueil</title>
       <div className="w-full max-w-2xl mx-auto text-center space-y-8 md:space-y-10">
-        <img src="/assets/icons/f1-logo.svg" alt="F1 Logo" className="mx-auto w-20 md:w-28 mb-6 drop-shadow-xl" />
+        {/* <img src="/assets/icons/f1-logo.svg" alt="F1 Logo" className="mx-auto w-20 md:w-28 mb-6 drop-shadow-xl" /> */}
         <h1 className="text-3xl md:text-5xl font-extrabold tracking-wide text-red-500 mb-2 md:mb-4">F1 Strategy Simulator</h1>
         <h2 className="text-lg md:text-2xl font-semibold text-gray-200 mb-4 md:mb-6">Plongez dans la stratégie d'une course de Formule 1 !</h2>
         <p className="text-base md:text-lg text-gray-300 mb-6 md:mb-8 leading-relaxed">
