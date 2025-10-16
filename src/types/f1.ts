@@ -36,6 +36,7 @@ export interface Driver {
   gapToLeader?: number; // écart au leader en secondes
   intervalToNext?: number; // intervalle au suivant en secondes
   strategy?: Array<{ compound: TyreCompound; laps: number; fuel: number }>;
+  isUserControlled?: boolean;
 }
 
 export interface RaceSettings {

@@ -1,14 +1,35 @@
 import { PitWall } from './components/layout/PitWall';
 import { useSimulation } from './hooks/useSimulation';
+import { useSimulationStore } from './stores/simulationStore';
 import Home from './components/Home';
+import MenuFlow from './components/MenuFlow';
 import { useState } from 'react';
 
 function App() {
   const { isRaceRunning } = useSimulation();
+  const simulationStore = useSimulationStore();
   const [showHome, setShowHome] = useState(true);
+  const [showMenu, setShowMenu] = useState(false);
+  const [menuDone, setMenuDone] = useState(false);
 
+
+  // Callback pour la fin du menu
+  const handleMenuDone = (choices: any) => {
+  console.log('[DEBUG] handleMenuDone called with:', choices);
+  if (choices.circuit) simulationStore.setCircuit(choices.circuit);
+  if (choices.team) simulationStore.setTeam(choices.team);
+  if (choices.driver1 && choices.driver2) simulationStore.setDrivers([choices.driver1, choices.driver2]);
+  // NE PAS démarrer la course automatiquement
+  setMenuDone(true);
+  setShowMenu(false);
+  };
+
+  // Lancement du flow : Home -> Menu -> Simulation
   if (showHome) {
-    return <Home onPlay={() => setShowHome(false)} />;
+    return <Home onPlay={() => { setShowHome(false); setShowMenu(true); }} />;
+  }
+  if (showMenu && !menuDone) {
+    return <MenuFlow onDone={handleMenuDone} />;
   }
 
   return (

@@ -1,14 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Play, Square, SkipForward, Settings } from 'lucide-react';
 import { useSimulationStore } from '../../stores/simulationStore';
 import { useSimulation } from '../../hooks/useSimulation';
 import { Card } from '../ui/Card';
 import { DriverCard } from '../simulation/DriverCard';
+import TimingTower from '../simulation/TimingTower';
 import { CircuitSelector } from '../ui/CircuitSelector';
 import { RaceControls } from '../race/RaceControls';
 import { StrategyModal } from '../simulation/StrategyModal';
 
-export const PitWall = () => {
+export const PitWall = ({ menuChoices }: { menuChoices?: any }) => {
+  // Find selected drivers from menuChoices
+  const selectedDrivers = menuChoices && menuChoices.driver1 && menuChoices.driver2 ? [menuChoices.driver1, menuChoices.driver2] : [];
+  // ...existing code...
+  // All hooks and store variables are now initialized
+  // ...existing code...
+
   const { 
     isRaceRunning, 
     currentLap, 
@@ -19,8 +26,22 @@ export const PitWall = () => {
     stopRace, 
     advanceLap,
     manualPit,
-    pitConfig
+    pitConfig,
+    setRaceSettings,
+    setDrivers,
+    setCircuit,
+    setTeam
   } = useSimulationStore();
+
+  // Appliquer les choix du menu à la simulation dès le début
+  useEffect(() => {
+    if (menuChoices) {
+      if (menuChoices.circuit) setCircuit(menuChoices.circuit);
+      if (menuChoices.team) setTeam(menuChoices.team);
+      if (menuChoices.driver1 && menuChoices.driver2) setDrivers([menuChoices.driver1, menuChoices.driver2]);
+      // ... autres paramètres
+    }
+  }, [menuChoices]);
 
   const { getLeader } = useSimulation();
   const [selectedDriverForStrategy, setSelectedDriverForStrategy] = useState<string | null>(null);
@@ -29,7 +50,7 @@ export const PitWall = () => {
   const progress = (currentLap / totalLaps) * 100;
   const leader = getLeader();
   // Trouver le pilote ayant fait le meilleur tour
-  const bestLapDriver = drivers.reduce((best, d) => {
+  const bestLapDriver = drivers.reduce<{ name: string; bestLap: number } | null>((best: { name: string; bestLap: number } | null, d: typeof drivers[0]) => {
     const minLap = Math.min(...d.lapTimes);
     if (!best || minLap < best.bestLap) {
       return { name: d.name, bestLap: minLap };
@@ -37,8 +58,22 @@ export const PitWall = () => {
     return best;
   }, null);
 
+  // Build timing data for tower after all variables are initialized
+  const timingDrivers = drivers
+    .slice() // avoid mutating original array
+    .sort((a, b) => a.position - b.position)
+    .map((d, idx) => ({
+      name: d.name,
+      position: d.position,
+      lapTime: d.lapTimes?.[d.lapTimes.length - 1]?.toFixed(3) + 's' || '--',
+      gap: idx === 0 ? '+0.000s' : (d.totalTime - drivers[0].totalTime).toFixed(3) + 's',
+      isSelected: selectedDrivers.includes(d.name)
+    }));
+
   return (
-  <div className="w-full px-2 md:px-8 pt-10 pb-20 bg-gradient-to-br from-black via-gray-900 to-red-900 min-h-screen flex flex-col items-center">
+  <div className="w-full px-2 md:px-8 pt-10 pb-20 bg-gradient-to-br from-black via-gray-900 to-red-900 min-h-screen flex flex-col items-center relative">
+    {/* F1 Timing Tower Sidebar */}
+    <TimingTower drivers={timingDrivers} />
   <div className="w-full max-w-8xl mx-auto flex flex-col items-center">
         
         {/* HEADER AMÉLIORÉ */}

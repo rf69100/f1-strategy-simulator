@@ -139,12 +139,20 @@ export const StrategyModal = ({ isOpen, onClose, driverId, manualPit, pitConfig 
                 </p>
                 {/* Manual PIT button if available */}
                 {manualPit && pitConfig && (
-                  <button
-                    className="mt-3 w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-all"
-                    onClick={() => manualPit(driverId, pitConfig)}
-                  >
-                    Forcer PIT maintenant
-                  </button>
+                  <div>
+                    <button
+                      className="mt-3 w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-all"
+                      onClick={() => manualPit(driverId, pitConfig)}
+                    >
+                      Forcer PIT maintenant
+                    </button>
+                    <button
+                      className="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-all"
+                      onClick={() => pitConfig.setFuelThreshold(pitConfig.fuelThreshold + 20)}
+                    >
+                      Ajouter 20kg de carburant
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

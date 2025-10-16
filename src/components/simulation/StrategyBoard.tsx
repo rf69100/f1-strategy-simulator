@@ -112,7 +112,7 @@ export const StrategyBoard = ({
   };
 
   return (
-    <Card className="p-4">
+  <Card className="p-4">
       {/* Configurable pit thresholds & manual pit button */}
       <div className="mb-4 bg-black/20 rounded-lg p-3 border border-gray-700">
         <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
@@ -146,6 +146,12 @@ export const StrategyBoard = ({
           onClick={() => onManualPit({ tyreThreshold, fuelThreshold, pitDuration, compound: selectedPitCompound })}
         >
           Forcer PIT maintenant
+        </button>
+        <button
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-all mt-2 w-full"
+          onClick={() => onFuelAdd(20)}
+        >
+          Ajouter 20kg de carburant
         </button>
       </div>
   {/* ...existing code... */}

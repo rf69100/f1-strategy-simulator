@@ -263,8 +263,8 @@ export const DriverCard: React.FC<DriverCardProps> = ({
         </div>
       </div>
 
-      {/* Bouton stratégie F1 amélioré */}
-      {onStrategyClick && (
+      {/* Bouton stratégie F1 amélioré : visible uniquement pour les pilotes contrôlés par l'utilisateur */}
+      {driver.isUserControlled && onStrategyClick && (
         <button
           onClick={onStrategyClick}
           className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 px-4 rounded flex items-center justify-center gap-2 transition-colors"
