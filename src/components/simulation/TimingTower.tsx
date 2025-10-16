@@ -50,7 +50,6 @@ const TimingTower: React.FC<TimingTowerProps> = ({ drivers }) => {
       <h2 className="text-xs md:text-sm font-bold text-red-500 mb-2">Classement</h2>
       <ul className="w-full">
         {drivers.map((driver) => {
-          const driverData = DRIVER_DATA[driver.name];
           const teamColor = getTeamColor(driver.name);
           const teamAbbr = getTeamAbbr(driver.name);
           // Get compound from driver object if available

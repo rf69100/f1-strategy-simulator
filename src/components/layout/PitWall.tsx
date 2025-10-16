@@ -27,7 +27,6 @@ export const PitWall = ({ menuChoices }: { menuChoices?: any }) => {
     advanceLap,
     manualPit,
     pitConfig,
-    setRaceSettings,
     setDrivers,
     setCircuit,
     setTeam
@@ -50,8 +49,9 @@ export const PitWall = ({ menuChoices }: { menuChoices?: any }) => {
   const progress = (currentLap / totalLaps) * 100;
   const leader = getLeader();
   // Trouver le pilote ayant fait le meilleur tour
-  const bestLapDriver = (() => {
-    let best: { name: string; bestLap: number } | null = null;
+  type BestLapDriver = { name: string; bestLap: number } | null;
+  const bestLapDriver: BestLapDriver = (() => {
+    let best: BestLapDriver = null;
     drivers.forEach(d => {
       if (d.lapTimes && d.lapTimes.length > 0) {
         const minLap = Math.min(...d.lapTimes);
@@ -137,8 +137,8 @@ export const PitWall = ({ menuChoices }: { menuChoices?: any }) => {
                 {bestLapDriver ? (
                   <div className="bg-black/30 rounded-lg p-3 text-center flex-1">
                     <div className="text-xs text-gray-400">MEILLEUR TOUR</div>
-                    <div className="text-white font-bold text-lg">{bestLapDriver.name}</div>
-                    <div className="text-green-400 text-sm">{bestLapDriver.bestLap.toFixed(3)}s</div>
+                    <div className="text-white font-bold text-lg">{(bestLapDriver as { name: string; bestLap: number }).name}</div>
+                    <div className="text-green-400 text-sm">{(bestLapDriver as { name: string; bestLap: number }).bestLap.toFixed(3)}s</div>
                   </div>
                 ) : null}
               </div>
