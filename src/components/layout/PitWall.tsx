@@ -50,13 +50,18 @@ export const PitWall = ({ menuChoices }: { menuChoices?: any }) => {
   const progress = (currentLap / totalLaps) * 100;
   const leader = getLeader();
   // Trouver le pilote ayant fait le meilleur tour
-  const bestLapDriver = drivers.reduce<{ name: string; bestLap: number } | null>((best: { name: string; bestLap: number } | null, d: typeof drivers[0]) => {
-    const minLap = Math.min(...d.lapTimes);
-    if (!best || minLap < best.bestLap) {
-      return { name: d.name, bestLap: minLap };
-    }
+  const bestLapDriver = (() => {
+    let best: { name: string; bestLap: number } | null = null;
+    drivers.forEach(d => {
+      if (d.lapTimes && d.lapTimes.length > 0) {
+        const minLap = Math.min(...d.lapTimes);
+        if (!best || minLap < best.bestLap) {
+          best = { name: d.name, bestLap: minLap };
+        }
+      }
+    });
     return best;
-  }, null);
+  })();
 
   // Build timing data for tower after all variables are initialized
   const timingDrivers = drivers
@@ -129,13 +134,13 @@ export const PitWall = ({ menuChoices }: { menuChoices?: any }) => {
                   )}
                 </div>
                 {/* Encadré meilleur tour */}
-                {bestLapDriver && (
+                {bestLapDriver ? (
                   <div className="bg-black/30 rounded-lg p-3 text-center flex-1">
                     <div className="text-xs text-gray-400">MEILLEUR TOUR</div>
                     <div className="text-white font-bold text-lg">{bestLapDriver.name}</div>
                     <div className="text-green-400 text-sm">{bestLapDriver.bestLap.toFixed(3)}s</div>
                   </div>
-                )}
+                ) : null}
               </div>
             
             {/* Contrôles Principaux */}
