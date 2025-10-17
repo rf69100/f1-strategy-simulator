@@ -1,6 +1,9 @@
 import React from "react";
 import { Card } from "../ui/Card";
 import { TEAM_DATA, DRIVER_DATA } from "../../utils/f1Data";
+import { useState } from "react";
+import { useSimulationStore } from '../../stores/simulationStore';
+import { TyreCompound } from '../../types/f1';
 import { TeamName } from "../../types/f1";
 
 export interface MenuConfirmProps {
@@ -11,6 +14,9 @@ export interface MenuConfirmProps {
 }
 
 const MenuConfirm: React.FC<MenuConfirmProps> = ({ team, driver1, driver2, onConfirm }) => {
+  const [fuelPct, setFuelPct] = useState<number>(95);
+  const [tyre, setTyre] = useState<TyreCompound>('MEDIUM');
+  const setRaceSettings = useSimulationStore(state => state.setRaceSettings);
   return (
     <>
       <Card className="p-8 mb-8 animate-fade-in text-center">
@@ -44,9 +50,28 @@ const MenuConfirm: React.FC<MenuConfirmProps> = ({ team, driver1, driver2, onCon
             </div>
           </div>
         </div>
+        {/* Choix carburant & pneus au départ */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="text-left">
+            <label className="text-sm text-gray-300">Carburant initial (%)</label>
+            <input type="range" min={50} max={100} value={fuelPct} onChange={(e) => setFuelPct(Number(e.target.value))} className="w-full" />
+            <div className="text-sm text-gray-200">{fuelPct}%</div>
+          </div>
+          <div className="text-left">
+            <label className="text-sm text-gray-300">Pneus au départ</label>
+            <div className="flex gap-2 mt-2">
+              {(['SOFT','MEDIUM','HARD','INTERMEDIATE','WET'] as TyreCompound[]).map(t => (
+                <button key={t} onClick={() => setTyre(t)} className={`px-3 py-2 rounded ${tyre === t ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200'}`}>{t}</button>
+              ))}
+            </div>
+          </div>
+        </div>
         <button
           className="mt-8 bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-8 rounded-full shadow-xl text-lg animate-pulse"
-          onClick={onConfirm}
+          onClick={() => {
+            setRaceSettings({ initialFuelPct: fuelPct, initialTyreCompound: tyre });
+            onConfirm();
+          }}
         >
           Valider et continuer
         </button>

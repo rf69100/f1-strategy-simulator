@@ -89,6 +89,7 @@ interface SimulationState {
   trackTemp: number;
   airTemp: number;
   drivers: Driver[];
+  qualifyingGrid?: string[];
   raceSettings: RaceSettings;
   sessionTime: number;
   lastLapTimestamp: number;
@@ -113,6 +114,7 @@ export interface SimulationActions {
   setTeam: (team: string) => void;
   calculateDriverStrategy: (driverId: string) => any;
   setStartingGrid: (grid: string[]) => void;
+  setQualifyingGrid: (grid: string[]) => void;
 // (accolade supprimée)
 }
 
@@ -131,7 +133,9 @@ const getRaceSettings = (circuitId: string = 'monaco'): RaceSettings => {
       'INTERMEDIATE': 4,
       'WET': 2
     },
-    fuelCapacity: 110 // kg
+    fuelCapacity: 110, // kg
+    initialFuelPct: 95,
+    initialTyreCompound: 'MEDIUM'
   };
 };
 
@@ -153,12 +157,14 @@ const createInitialDrivers = (circuitId: string = 'monaco'): Driver[] => {
       team: driverData.team,
       position: 0,
       tyres: {
-        compound: strategy[0]?.compound || 'MEDIUM',
+        compound: raceSettings.initialTyreCompound || strategy[0]?.compound || 'MEDIUM',
         wear: 8 + Math.random() * 15,
         age: 1,
         degradationRate: getTyreDegradationRate(strategy[0]?.compound || 'MEDIUM', teamData.performance, circuitId)
       },
-      fuel: strategy[0]?.fuel || (95 + Math.random() * 8),
+      // Convert fuel kg to percentage of capacity for UI consistency
+  // Start every car with the configured initial fuel percentage (uniform for all)
+  fuel: Math.min(100, raceSettings.initialFuelPct || 95),
       lapTimes: [baseLapTime * (0.98 + Math.random() * 0.04)],
       currentLap: 1,
       pitStops: 0,
@@ -246,6 +252,7 @@ const INITIAL_RACE_SETTINGS = getRaceSettings(INITIAL_CIRCUIT);
 const INITIAL_DRIVERS = createInitialDrivers(INITIAL_CIRCUIT);
 
 export const useSimulationStore = create<SimulationState & SimulationActions>((set, get) => ({
+  setQualifyingGrid: (grid: string[]) => set({ qualifyingGrid: grid }),
   setRaceSettings: (settings: Partial<RaceSettings>) => set((state) => ({ raceSettings: { ...state.raceSettings, ...settings } })),
   setDrivers: (userDriverNames: string[]) => set(() => {
     // Génère une stratégie par équipe
@@ -263,15 +270,21 @@ export const useSimulationStore = create<SimulationState & SimulationActions>((s
       }
     });
 
+    const userTeam = get().raceSettings.team;
     const allDrivers = Object.entries(DRIVER_DATA).map(([name, d], idx) => {
-      const strategy = teamStrategies[d.team];
+      const strategy = (d.team === userTeam)
+        ? [] // Pas de stratégie automatique pour l'équipe utilisateur
+        : teamStrategies[d.team];
+      // Uniformisation de l'ID : nom en minuscules, espaces -> tirets
+      const id = name.toLowerCase().replace(/ /g, '-');
       return {
-        id: name,
+        id,
         name,
         team: d.team,
         position: idx + 1,
         tyres: { compound: strategy[0]?.compound || 'SOFT', wear: 0, age: 0, degradationRate: 1 },
-        fuel: strategy[0]?.fuel || 100,
+  // Start every car with the configured initial fuel percentage (uniform for all)
+  fuel: Math.min(100, get().raceSettings.initialFuelPct || 95),
         lapTimes: [],
         currentLap: 0,
         pitStops: 0,
@@ -285,8 +298,22 @@ export const useSimulationStore = create<SimulationState & SimulationActions>((s
   }),
   setTeam: (team: string) => set((state) => ({ raceSettings: { ...state.raceSettings, team } })),
   setStartingGrid: (grid: string[]) => {
-    const orderedDrivers = grid.map(id => get().drivers.find(d => d.id === id)).filter((d): d is Driver => !!d);
-    orderedDrivers.forEach((d, i) => { d.position = i + 1; });
+    // Réordonne tous les pilotes selon l'ordre Q3, puis les autres (éliminés) à la suite
+    const allDrivers = get().drivers;
+    const gridSet = new Set(grid);
+    const orderedDrivers = [
+      ...grid.map(id => allDrivers.find(d => d.id === id)).filter((d): d is Driver => !!d),
+      ...allDrivers.filter(d => !gridSet.has(d.id))
+    ];
+    // Set position and leader
+    orderedDrivers.forEach((d, i) => {
+      if (d) d.position = i + 1;
+    });
+    // Update all drivers' position property in the main array as well
+    allDrivers.forEach(driver => {
+      const idx = orderedDrivers.findIndex(d => d.id === driver.id);
+      if (idx !== -1) driver.position = idx + 1;
+    });
     set({ drivers: orderedDrivers });
   },
   isRaceRunning: false,
@@ -347,6 +374,54 @@ export const useSimulationStore = create<SimulationState & SimulationActions>((s
       const teamData = TEAM_DATA[driver.team];
       if (!driverData || !teamData || driver.status === 'DNF') return driver;
 
+      // Si le pilote est contrôlé par l'utilisateur, on simule tout sauf le pitstop automatique
+      if (driver.isUserControlled) {
+        // Usure, carburant, temps au tour comme les IA
+        const lapTimeFactors: LapTimeFactors = {
+          tyreWear: driver.tyres.wear,
+          fuelLoad: driver.fuel,
+          trackEvolution,
+          driverPerformance: (Math.random() - 0.5) * 2 * (1 - driverData.consistency),
+          weatherImpact: getWeatherMultiplier(weather),
+          traffic: Math.random() * 0.3,
+          carPerformance: teamData.performance,
+          tyreCompound: driver.tyres.compound,
+          drsEffect: Math.random() > 0.6 ? 1 : 0
+        };
+        const circuitData = CIRCUIT_DATA[raceSettings.circuitId as keyof typeof CIRCUIT_DATA] || CIRCUIT_DATA.monaco;
+        const baseLapTime = circuitData.poleTime;
+        const lapTime = calculateLapTime(baseLapTime, lapTimeFactors, raceSettings.circuitId);
+        const newWear = calculateTyreWear(
+          driver.tyres.compound,
+          driver.tyres.wear,
+          trackTemp,
+          driverData.aggression,
+          raceSettings.circuitId
+        );
+        const fuelConsumption = calculateFuelConsumption(
+          BASE_FUEL_CONSUMPTION,
+          weather,
+          safetyCar === 'SC',
+          safetyCar === 'VSC',
+          raceSettings.circuitId
+        );
+        const fuelAfter = Math.max(0, driver.fuel - fuelConsumption);
+        // On ne fait pas d'arrêt automatique, même si seuil dépassé
+        return {
+          ...driver,
+          currentLap: driver.currentLap + 1,
+          tyres: {
+            ...driver.tyres,
+            wear: newWear,
+            age: driver.tyres.age + 1
+          },
+          fuel: fuelAfter,
+          lapTimes: [...driver.lapTimes, lapTime],
+          totalTime: driver.totalTime + lapTime,
+          status: driver.status
+        };
+      }
+
       if (generateRandomIncident(currentLap, driverData.aggression)) {
         newIncidents++;
         if (Math.random() < 0.7) {
@@ -380,9 +455,9 @@ export const useSimulationStore = create<SimulationState & SimulationActions>((s
       };
 
       // Use realistic base lap time from circuit data
-  const circuitData = CIRCUIT_DATA[raceSettings.circuitId as keyof typeof CIRCUIT_DATA] || CIRCUIT_DATA.monaco;
-  const baseLapTime = circuitData.poleTime;
-  const lapTime = calculateLapTime(baseLapTime, lapTimeFactors, raceSettings.circuitId);
+      const circuitData = CIRCUIT_DATA[raceSettings.circuitId as keyof typeof CIRCUIT_DATA] || CIRCUIT_DATA.monaco;
+      const baseLapTime = circuitData.poleTime;
+      const lapTime = calculateLapTime(baseLapTime, lapTimeFactors, raceSettings.circuitId);
       const newWear = calculateTyreWear(
         driver.tyres.compound,
         driver.tyres.wear,
@@ -660,21 +735,21 @@ export const useSimulationStore = create<SimulationState & SimulationActions>((s
       trackTemp: 42,
       airTemp: 28,
       incidents: 0,
-      drivers: createInitialDrivers(raceSettings.circuitId).map(driver => ({
+        drivers: createInitialDrivers(raceSettings.circuitId).map(driver => ({
         ...driver,
         lapTimes: driver.lapTimes.slice(0, 1),
         currentLap: 1,
         pitStops: 0,
-        fuel: 95 + Math.random() * 8,
+          fuel: Math.min(100, (raceSettings.initialFuelPct || 95)),
         totalTime: driver.lapTimes[0] || 87.0,
         status: 'RUNNING',
         gapToLeader: 0,
         intervalToNext: 0,
-        tyres: { 
-          compound: 'MEDIUM', 
+          tyres: { 
+          compound: raceSettings.initialTyreCompound || 'MEDIUM', 
           wear: 8 + Math.random() * 15,
           age: 1,
-          degradationRate: getTyreDegradationRate('MEDIUM', TEAM_DATA[driver.team]?.performance || 0.8, raceSettings.circuitId)
+          degradationRate: getTyreDegradationRate(raceSettings.initialTyreCompound || 'MEDIUM', TEAM_DATA[driver.team]?.performance || 0.8, raceSettings.circuitId)
         }
       }))
     });

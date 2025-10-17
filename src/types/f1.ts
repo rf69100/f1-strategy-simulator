@@ -45,6 +45,9 @@ export interface RaceSettings {
   circuitId: string;
   tyreAllocation: Record<TyreCompound, number>; // Plus flexible
   fuelCapacity: number; // kg
+  team?: string; // Ajout : équipe utilisateur
+  initialFuelPct?: number; // Pourcentage de carburant au départ (0-100)
+  initialTyreCompound?: TyreCompound; // Compound initial choisi
 }
 
 export interface SimulationState {

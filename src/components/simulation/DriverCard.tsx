@@ -12,7 +12,7 @@ interface DriverCardProps {
 
 export const DriverCard: React.FC<DriverCardProps> = ({ 
   driver, 
-  onStrategyClick, 
+  onStrategyClick,
   leaderTime 
 }) => {
   const lastLap = driver.lapTimes[driver.lapTimes.length - 1];
@@ -154,10 +154,11 @@ export const DriverCard: React.FC<DriverCardProps> = ({
         
         {/* Pneus avec style F1 */}
         <div className="text-right ml-2 flex-shrink-0">
-          <div 
-            className={`px-3 py-2 rounded-full text-xs font-bold text-black ${getTyreColor(driver.tyres.compound)} shadow-lg`}
-          >
-            {driver.tyres.compound.slice(0,1)}
+          <div className="flex items-center justify-end gap-2">
+            <div className={`w-3 h-3 rounded-full ${getTyreColor(driver.tyres.compound)}`} />
+            <div className="px-2 py-1 rounded text-xs font-semibold text-gray-200 bg-black/20">
+              {driver.tyres.compound}
+            </div>
           </div>
           <div className="flex items-center justify-end gap-1 mt-1">
             <div className="text-xs text-gray-300">
@@ -263,15 +264,16 @@ export const DriverCard: React.FC<DriverCardProps> = ({
         </div>
       </div>
 
-      {/* Bouton stratégie F1 amélioré : visible uniquement pour les pilotes contrôlés par l'utilisateur */}
+      {/* Bouton stratégie : visible uniquement pour pilotes contrôlés par l'utilisateur */}
       {driver.isUserControlled && onStrategyClick && (
         <button
+          className="mt-3 w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow transition"
           onClick={onStrategyClick}
-          className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 px-4 rounded flex items-center justify-center gap-2 transition-colors"
         >
-          <Calculator size={14} />
+          <span className="inline-block mr-2">
+            <Calculator size={16} />
+          </span>
           Stratégie
-          {needsPitStop && <span className="animate-pulse">⚠️</span>}
         </button>
       )}
     </Card>

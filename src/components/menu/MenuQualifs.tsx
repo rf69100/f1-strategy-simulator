@@ -14,18 +14,31 @@ const MenuQualifs: React.FC<MenuQualifsProps> = ({ onNext }) => {
   const drivers = useSimulationStore(state => state.drivers);
   const circuitId = useSimulationStore(state => state.raceSettings.circuitId);
   const setStartingGrid = useSimulationStore(state => state.setStartingGrid);
+  const setQualifyingGrid = useSimulationStore(state => state.setQualifyingGrid);
 
-  // Simule les qualifs une seule fois
-  const qualifResults = useMemo(() => simulateQualifying(drivers, circuitId), [drivers, circuitId]);
+  // Simule les qualifs une seule fois et sauvegarde le classement Q3 dans le store
+  const qualifResults = useMemo(() => {
+  const results = simulateQualifying(drivers, circuitId);
+  // Helper pour générer l'ID cohérent
+  const getId = (driver: any) => driver.name.toLowerCase().replace(/ /g, '-');
+  // Q3: pilotes non éliminés
+  const q3Grid = results.stages[2]?.ranking.map(r => getId(r.driver)) || [];
+  // Q2: pilotes éliminés en Q2
+  const q2Elim = results.stages[1]?.ranking.filter(r => r.eliminated).map(r => getId(r.driver)) || [];
+  // Q1: pilotes éliminés en Q1
+  const q1Elim = results.stages[0]?.ranking.filter(r => r.eliminated).map(r => getId(r.driver)) || [];
+  // Grille finale = Q3 + Q2 éliminés + Q1 éliminés
+  const fullGrid = [...q3Grid, ...q2Elim, ...q1Elim];
+  setQualifyingGrid(fullGrid);
+  return results;
+  }, [drivers, circuitId]);
 
-  // On récupère les pilotes Q3 simulés (ordre exact du classement Q3)
-  const q3Drivers = qualifResults.stages[2]?.ranking.map(r => r.driver);
-
-  // On passe les pilotes Q3 simulés à la grille de départ et au store
+  // On récupère le classement Q3 sauvegardé
+  const qualifyingGrid = useSimulationStore(state => state.qualifyingGrid);
+  // On passe le classement Q3 à la grille de départ au démarrage de la course
   const handleStart = () => {
-    if (q3Drivers) {
-      setStartingGrid(q3Drivers.map(d => d.id));
-      useSimulationStore.setState({ drivers: q3Drivers });
+    if (qualifyingGrid && qualifyingGrid.length > 0) {
+      setStartingGrid(qualifyingGrid);
     }
     if (onNext) onNext();
   };
@@ -59,7 +72,7 @@ const MenuQualifs: React.FC<MenuQualifsProps> = ({ onNext }) => {
         </div>
       ))}
       <button
-        className="mt-8 bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-8 rounded-full shadow-xl text-lg animate-pulse"
+        className="mt-4 bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-8 rounded-full shadow-xl text-lg animate-pulse"
         onClick={handleStart}
       >
         Démarrer la course
