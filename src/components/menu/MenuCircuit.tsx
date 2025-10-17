@@ -20,14 +20,12 @@ const MenuCircuit: React.FC<MenuCircuitProps> = ({ selectedCircuit, onSelectCirc
             return (
               <button
                 key={id}
-                className={`flex flex-col items-center p-4 rounded-lg shadow-xl border-2 transition-colors focus:outline-none focus:ring-2 ${isSelected ? "border-green-500 bg-green-900/30 ring-green-400" : "border-gray-700 bg-gray-800 hover:border-green-400"}`}
+                className={`flex items-center justify-center p-4 rounded-lg shadow-xl border-2 transition-colors focus:outline-none focus:ring-2 ${isSelected ? "border-green-500 bg-green-900/30 ring-green-400" : "border-gray-700 bg-gray-800 hover:border-green-400"}`}
                 onClick={() => setLocalSelected(prev => prev === id ? undefined : id)}
                 aria-pressed={isSelected}
               >
-                <span className="font-bold text-lg mb-1">{c.name}</span>
-                <span className="text-gray-400 text-sm mb-1">{c.laps} tours &bull; {c.lapDistance} km/tour</span>
-                <span className="text-xs text-gray-300">Virages: {c.corners} &bull; DRS: {c.drsZones}</span>
-                {isSelected && <span className="mt-2 text-green-400 text-xs font-semibold">Sélectionné</span>}
+                <span className="font-bold text-lg">{c.name}</span>
+                {isSelected && <span className="ml-3 text-green-400 text-xs font-semibold">Sélectionné</span>}
               </button>
             );
           })}

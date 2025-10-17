@@ -27,13 +27,67 @@ if [[ -z "$FTP_USER" || -z "$FTP_PASS" ]]; then
         exit 1
 fi
 
-PROJECT_LIST=(
-    # Format: "DisplayName:local_path:remote_folder:build_folder"
-    "Portfolio:/var/www/html/websites/react/mon-portfolio:mon-portfolio:build"
-    "NBA Dashboard:/var/www/html/websites/react/nba-dashbord:nba_dashboard:nba_dashboard"
-    "Spotify Album Finder:/var/www/html/websites/react/album_finder_spotify:spotify-finder:dist"
-    "F1 Strategy Simulator:/var/www/html/websites/react/f1-strategy-simulator:f1-simulator:dist"
-)
+### PROJECT LOADING (universal)
+# Projects can be provided in three ways (priority order):
+# 1) A file named .deploy.projects in the repo root with lines:
+#    DisplayName:local_path:remote_folder:build_folder
+#    Lines starting with # are ignored.
+# 2) Script positional arguments: each arg is local_path[:remote_folder[:build_folder]]
+# 3) Auto-scan: find subdirectories containing package.json and deploy them using
+#    basename(local_path) as remote_folder and auto-detected build folder.
+
+PROJECT_LIST=()
+
+load_projects_from_file() {
+    local file="$1"
+    while IFS= read -r line || [ -n "$line" ]; do
+        # strip comments and whitespace
+        line="$(echo "$line" | sed 's/#.*//' | xargs)"
+        [ -z "$line" ] && continue
+        PROJECT_LIST+=("$line")
+    done < "$file"
+}
+
+load_projects_from_args() {
+    for arg in "$@"; do
+        # support DisplayName:local_path:remote_folder:build_folder or local_path[:remote_folder[:build_folder]]
+        if [[ "$arg" == *":"* ]]; then
+            PROJECT_LIST+=("$arg")
+        else
+            # just a local path
+            local lp="$arg"
+            local name
+            name=$(basename "$lp")
+            PROJECT_LIST+=("$name:$lp:$name:auto")
+        fi
+    done
+}
+
+auto_scan_projects() {
+    # default search root is current directory
+    local root="${SEARCH_ROOT-.}"
+    while IFS= read -r -d $'\0' dir; do
+        local name
+        name=$(basename "$dir")
+        PROJECT_LIST+=("$name:$dir:$name:auto")
+    done < <(find "$root" -maxdepth 2 -type f -name package.json -print0 | xargs -0 -n1 dirname -z | tr '\0' '\n' | sed -n '1,200p' | xargs -0 -n1 printf '%s\0')
+}
+
+# Load projects: file -> args -> auto-scan
+if [ -f ".deploy.projects" ]; then
+    load_projects_from_file ".deploy.projects"
+elif [ "$#" -gt 0 ]; then
+    load_projects_from_args "$@"
+else
+    auto_scan_projects
+fi
+
+# If still empty, exit
+if [ ${#PROJECT_LIST[@]} -eq 0 ]; then
+    echo "❌ Aucun projet trouvé à déployer. Créez .deploy.projects, ou passez les chemins en argument."
+    exit 1
+fi
+
 
 clear_cache() {
     local project_name="$1"
@@ -76,34 +130,74 @@ deploy_project() {
 
     echo "📥 Pull des dernières modifications..."
     # use autostash to avoid interactive stash conflicts
-    if ! git pull --rebase --autostash; then
-        echo "⚠️  Erreur lors du git pull — tentative de correction automatique..."
-        # If the failure is due to tsbuildinfo being unmerged/needs merge, try to untrack them
-        if git ls-files -u | grep -q 'tsbuildinfo' 2>/dev/null || git status --porcelain | grep -q 'tsbuildinfo' 2>/dev/null; then
-            echo "🔁 Conflit tsbuildinfo détecté — ajout à .gitignore et retrait du suivi"
-            if ! grep -q "tsbuildinfo" .gitignore 2>/dev/null; then
-                printf '\n# TypeScript incremental build info\n*.tsbuildinfo\n' >> .gitignore
+        if ! git pull --rebase --autostash; then
+            echo "⚠️  git pull a échoué — tentative de correction automatique..."
+            # fetch origin to inspect remote versions
+            git fetch origin --quiet || true
+
+            # If .gitignore is in conflict, try to auto-merge unique lines from origin/main and local
+            conflict_detected=false
+            if git ls-files -u | grep -q '\.gitignore' 2>/dev/null || git status --porcelain | grep -q '\.gitignore' 2>/dev/null; then
+                conflict_detected=true
+                echo "🔁 Conflit .gitignore détecté — fusion automatique des entrées"
+                # get remote version (if exists)
+                remote_gitignore=""
+                if git show origin/main:.gitignore >/dev/null 2>&1; then
+                    remote_gitignore=$(git show origin/main:.gitignore 2>/dev/null || true)
+                fi
+                local_gitignore=$(cat .gitignore 2>/dev/null || true)
+                # merge unique lines preserving order
+                merged=$(printf "%s
+    %s
+    " "$local_gitignore" "$remote_gitignore" | awk '!seen[$0]++')
+                printf "%s
+    " "$merged" > .gitignore
                 git add .gitignore || true
+                echo "✅ .gitignore fusionné"
             fi
-            # Untrack any tracked tsbuildinfo files
-            mapfile -t tracked < <(git ls-files '*.tsbuildinfo' || true)
-            if [ "${#tracked[@]}" -gt 0 ]; then
-                git rm --cached --ignore-unmatch "${tracked[@]}" || true
-                git commit -m "ci: remove tsbuildinfo from repo (auto-fix deploy)" || true
+
+            # If tsbuildinfo files are causing issues, untrack them
+            if git ls-files -u | grep -q 'tsbuildinfo' 2>/dev/null || git status --porcelain | grep -q 'tsbuildinfo' 2>/dev/null; then
+                conflict_detected=true
+                echo "🔁 Conflit tsbuildinfo détecté — retrait du suivi"
+                if ! grep -q "tsbuildinfo" .gitignore 2>/dev/null; then
+                    printf '\n# TypeScript incremental build info\n*.tsbuildinfo\n' >> .gitignore
+                    git add .gitignore || true
+                fi
+                mapfile -t tracked < <(git ls-files '*.tsbuildinfo' || true)
+                if [ "${#tracked[@]}" -gt 0 ]; then
+                    git rm --cached --ignore-unmatch "${tracked[@]}" || true
+                    git commit -m "ci: remove tsbuildinfo from repo (auto-fix deploy)" || true
+                fi
+                echo "✅ tsbuildinfo retiré du suivi"
             fi
-            echo "🔁 Réessai du git pull après nettoyage..."
-            if ! git pull --rebase --autostash; then
-                echo "❌ git pull échoue toujours après tentative automatique"
-                git stash pop --index || true
+
+            if [ "$conflict_detected" = true ]; then
+                echo "🔁 Tentative de reprise du pull après résolution automatique..."
+                # If we're in the middle of a rebase, try to continue
+                if git rebase --show-current-patch >/dev/null 2>&1; then
+                    git rebase --continue >/dev/null 2>&1 || true
+                fi
+                if ! git pull --rebase --autostash; then
+                    echo "⚠️ Réessai du pull échoue encore — bascule en merge non-interactif"
+                    # Abort any rebase and fall back to merge strategy that combines changes
+                    git rebase --abort >/dev/null 2>&1 || true
+                    if git merge --no-edit origin/main; then
+                        echo "✅ Merge effectué depuis origin/main"
+                    else
+                        echo "❌ Merge échoue — abandon"
+                        git reset --hard HEAD >/dev/null 2>&1 || true
+                        git stash pop --index >/dev/null 2>&1 || true
+                        popd >/dev/null
+                        return 1
+                    fi
+                fi
+            else
+                echo "❌ git pull échoue pour une autre raison non automatisable"
+                git stash pop --index >/dev/null 2>&1 || true
                 popd >/dev/null
                 return 1
             fi
-        else
-            echo "❌ git pull échoue pour une autre raison."
-            git stash pop --index || true
-            popd >/dev/null
-            return 1
-        fi
     fi
 
     # Restore stashed changes if any
@@ -150,12 +244,20 @@ deploy_project() {
 
     echo "📤 Upload vers le serveur..."
     # Build lftp commands safely; mirror -R uploads local -> remote
-    local lftp_cmd="open -u '$FTP_USER','$FTP_PASS' $FTP_HOST;"
+    local lftp_cmd
+    local src_path
+    src_path="./$build_folder/"
+    if [ ! -d "$src_path" ]; then
+        echo "❌ Source de build introuvable: $src_path - skip $project_name"
+        popd >/dev/null
+        return 1
+    fi
+    lftp_cmd="open -u '$FTP_USER','$FTP_PASS' $FTP_HOST;"
     if [ -n "$remote_folder" ]; then
         # ensure remote path under /www
-        lftp_cmd+="mkdir -p /www/$remote_folder; cd /www/$remote_folder; mirror -R --delete --continue --verbose ./$build_folder/ .;"
+        lftp_cmd+="mkdir -p /www/$remote_folder; cd /www/$remote_folder; mirror -R --delete --continue --verbose $src_path .;"
     else
-        lftp_cmd+="cd /www; mirror -R --delete --continue --verbose ./$build_folder/ .;"
+        lftp_cmd+="cd /www; mirror -R --delete --continue --verbose $src_path .;"
     fi
 
     if ! lftp -c "$lftp_cmd"; then
@@ -178,6 +280,29 @@ declare -A DEPLOY_STATUS
 
 for entry in "${PROJECT_LIST[@]}"; do
     IFS=':' read -r project_name project_path remote_folder build_folder <<<"$entry"
+    # normalize defaults
+    if [ -z "$project_name" ] || [ -z "$project_path" ]; then
+        echo "⚠️  Entrée projet invalide: $entry - skipping"
+        continue
+    fi
+    if [ -z "$remote_folder" ]; then
+        remote_folder=$(basename "$project_path")
+    fi
+    if [ -z "$build_folder" ] || [ "$build_folder" = "auto" ]; then
+        # detect by common build outputs
+        if [ -d "$project_path/dist" ]; then
+            build_folder="dist"
+        elif [ -d "$project_path/build" ]; then
+            build_folder="build"
+        else
+            # inspect package.json build script to guess vite vs cra
+            if [ -f "$project_path/vite.config.ts" ] || [ -f "$project_path/vite.config.js" ]; then
+                build_folder="dist"
+            else
+                build_folder="build"
+            fi
+        fi
+    fi
     status=0
     deploy_project "$project_name" "$project_path" "$remote_folder" "$build_folder" || status=$?
     if [ $status -eq 0 ]; then
