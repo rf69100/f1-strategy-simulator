@@ -25,3 +25,6 @@ dist-ssr
 
 # TypeScript incremental build info
 *.tsbuildinfo
+
+# Local deploy credentials (keep out of repo)
+.deploy.env
