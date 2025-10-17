@@ -38,7 +38,7 @@ export const CircuitSelector = () => {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {/* Left: liste circuits (nom uniquement) */}
+                {/* Left: liste circuits */}
                 <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
                   {circuits.map(([id, circuit]) => {
                     const active = id === selectedCircuitId;
@@ -48,9 +48,14 @@ export const CircuitSelector = () => {
                         onClick={() => setSelectedCircuitId(id)}
                         className={`text-left rounded-lg p-3 transition-all border ${active ? 'ring-2 ring-blue-500 border-blue-600 bg-gray-900' : 'bg-gray-800 border-gray-600 hover:scale-105'}`}
                       >
-                        <div className="flex items-center gap-3 mb-0">
+                        <div className="flex items-center gap-3 mb-2">
                           <MapPin size={18} className="text-red-400" />
                           <h3 className={`text-md font-bold ${active ? 'text-blue-300' : 'text-white'}`}>{circuit.name}</h3>
+                        </div>
+                        <div className="text-sm text-gray-300 space-y-1">
+                          <div className="flex items-center gap-2"><Clock size={14} /> <span>{circuit.laps} tours • {circuit.lapDistance}km</span></div>
+                          <div className="flex items-center gap-2"><TrendingUp size={14} /> <span>Vitesse max: {circuit.topSpeed} km/h</span></div>
+                          <div className="flex items-center gap-2"><Zap size={14} /> <span>Usure pneus: {circuit.tyreWear > 1.2 ? 'Élevée' : circuit.tyreWear > 0.9 ? 'Moyenne' : 'Faible'}</span></div>
                         </div>
                       </button>
                     );

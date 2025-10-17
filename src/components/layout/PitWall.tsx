@@ -82,7 +82,15 @@ export const PitWall = ({ menuChoices }: { menuChoices?: any }) => {
     ? qualifyingGrid.map(id => drivers.find(d => d.id === id)).filter((d): d is Driver => !!d)
     : drivers.slice().sort((a, b) => a.position - b.position);
 
-    // debugGridInfo removed for production UI
+    // DEBUG: Show grid info for diagnosis
+    const debugGridInfo = (
+      <div style={{position: 'absolute', top: 0, left: 0, background: '#222', color: 'yellow', zIndex: 9999, padding: '8px', fontSize: '12px'}}>
+        <div>DEBUG GRID:</div>
+        <div>qualifyingGrid: {JSON.stringify(qualifyingGrid)}</div>
+        <div>drivers: {drivers.map(d => d.id + ':' + d.position).join(', ')}</div>
+        <div>orderedDrivers: {orderedDrivers.map(d => d.id).join(', ')}</div>
+      </div>
+    );
   // Build timing data for tower after all variables are initialized
   const timingDrivers = orderedDrivers
     // Correction : classement F1, positions fixes 1 à 20
@@ -106,7 +114,7 @@ export const PitWall = ({ menuChoices }: { menuChoices?: any }) => {
   return (
     <div className="w-full px-2 md:px-8 pt-10 pb-20 bg-gradient-to-br from-black via-gray-900 to-red-900 min-h-screen flex flex-col items-center relative">
   {/* Bloc bouton 'Apparition magique des pilotes' supprimé définitivement */}
-  {/* debugGridInfo removed */}
+      {debugGridInfo}
       {/* F1 Timing Tower Sidebar */}
       <TimingTower drivers={timingDrivers} />
       <div className="w-full max-w-8xl mx-auto flex flex-col items-center">
