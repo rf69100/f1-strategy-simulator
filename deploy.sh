@@ -27,71 +27,13 @@ if [[ -z "$FTP_USER" || -z "$FTP_PASS" ]]; then
         exit 1
 fi
 
-### PROJECT LOADING (universal)
-# Projects can be provided in three ways (priority order):
-# 1) A file named .deploy.projects in the repo root with lines:
-#    DisplayName:local_path:remote_folder:build_folder
-#    Lines starting with # are ignored.
-# 2) Script positional arguments: each arg is local_path[:remote_folder[:build_folder]]
-# 3) Auto-scan: find subdirectories containing package.json and deploy them using
-#    basename(local_path) as remote_folder and auto-detected build folder.
-
 PROJECT_LIST=(
+    # Format: "DisplayName:local_path:remote_folder:build_folder"
     "Portfolio:/var/www/html/websites/react/mon-portfolio:mon-portfolio:build"
-  "NBA Dashboard:/var/www/html/websites/react/nba-dashbord:nba_dashboard:nba_dashboard"
-  "Spotify Album Finder:/var/www/html/websites/react/album_finder_spotify:spotify-finder:dist"
-  "F1 Strategy Simulator:/var/www/html/websites/react/f1-strategy-simulator:f1-simulator:dist")
-
-load_projects_from_file() {
-    local file="$1"
-    while IFS= read -r line || [ -n "$line" ]; do
-        # strip comments and whitespace
-        line="$(echo "$line" | sed 's/#.*//' | xargs)"
-        [ -z "$line" ] && continue
-        PROJECT_LIST+=("$line")
-    done < "$file"
-}
-
-load_projects_from_args() {
-    for arg in "$@"; do
-        # support DisplayName:local_path:remote_folder:build_folder or local_path[:remote_folder[:build_folder]]
-        if [[ "$arg" == *":"* ]]; then
-            PROJECT_LIST+=("$arg")
-        else
-            # just a local path
-            local lp="$arg"
-            local name
-            name=$(basename "$lp")
-            PROJECT_LIST+=("$name:$lp:$name:auto")
-        fi
-    done
-}
-
-auto_scan_projects() {
-    # default search root is current directory
-    local root="${SEARCH_ROOT-.}"
-    while IFS= read -r -d $'\0' dir; do
-        local name
-        name=$(basename "$dir")
-        PROJECT_LIST+=("$name:$dir:$name:auto")
-    done < <(find "$root" -maxdepth 2 -type f -name package.json -print0 | xargs -0 -n1 dirname -z | tr '\0' '\n' | sed -n '1,200p' | xargs -0 -n1 printf '%s\0')
-}
-
-# Load projects: file -> args -> auto-scan
-if [ -f ".deploy.projects" ]; then
-    load_projects_from_file ".deploy.projects"
-elif [ "$#" -gt 0 ]; then
-    load_projects_from_args "$@"
-else
-    auto_scan_projects
-fi
-
-# If still empty, exit
-if [ ${#PROJECT_LIST[@]} -eq 0 ]; then
-    echo "❌ Aucun projet trouvé à déployer. Créez .deploy.projects, ou passez les chemins en argument."
-    exit 1
-fi
-
+    "NBA Dashboard:/var/www/html/websites/react/nba-dashbord:nba_dashboard:nba_dashboard"
+    "Spotify Album Finder:/var/www/html/websites/react/album_finder_spotify:spotify-finder:dist"
+    "F1 Strategy Simulator:/var/www/html/websites/react/f1-strategy-simulator:f1-simulator:dist"
+)
 
 clear_cache() {
     local project_name="$1"
