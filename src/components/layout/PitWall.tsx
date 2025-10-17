@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import type { Driver } from '../../types/f1';
 import { Play, Square, SkipForward, Settings } from 'lucide-react';
 import { useSimulationStore } from '../../stores/simulationStore';
 import { useSimulation } from '../../hooks/useSimulation';
@@ -49,18 +50,19 @@ export const PitWall = ({ menuChoices }: { menuChoices?: any }) => {
   const progress = (currentLap / totalLaps) * 100;
   const leader = getLeader();
   // Trouver le pilote ayant fait le meilleur tour
-  const bestLapDriver = (() => {
+  function getBestLapDriver(drivers: Driver[]): { name: string; bestLap: number } | null {
     let best: { name: string; bestLap: number } | null = null;
-    drivers.forEach(d => {
+    for (const d of drivers) {
       if (d.lapTimes && d.lapTimes.length > 0) {
         const minLap = Math.min(...d.lapTimes);
         if (!best || minLap < best.bestLap) {
           best = { name: d.name, bestLap: minLap };
         }
       }
-    });
+    }
     return best;
-  })();
+  }
+  const bestLapDriver = getBestLapDriver(drivers);
 
   // Build timing data for tower after all variables are initialized
   const timingDrivers = drivers
@@ -133,7 +135,7 @@ export const PitWall = ({ menuChoices }: { menuChoices?: any }) => {
                   )}
                 </div>
                 {/* Encadré meilleur tour */}
-                {bestLapDriver && typeof bestLapDriver === 'object' && 'name' in bestLapDriver && 'bestLap' in bestLapDriver ? (
+                {bestLapDriver ? (
                   <div className="bg-black/30 rounded-lg p-3 text-center flex-1">
                     <div className="text-xs text-gray-400">MEILLEUR TOUR</div>
                     <div className="text-white font-bold text-lg">{bestLapDriver.name}</div>
