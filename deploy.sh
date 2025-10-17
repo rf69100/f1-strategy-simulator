@@ -36,7 +36,12 @@ fi
 # 3) Auto-scan: find subdirectories containing package.json and deploy them using
 #    basename(local_path) as remote_folder and auto-detected build folder.
 
-PROJECT_LIST=()
+PROJECT_LIST=(
+    "Portfolio:/var/www/html/websites/react/mon-portfolio:mon-portfolio:build"
+  "NBA Dashboard:/var/www/html/websites/react/nba-dashbord:nba_dashboard:nba_dashboard"
+  "Spotify Album Finder:/var/www/html/websites/react/album_finder_spotify:spotify-finder:dist"
+  "F1 Strategy Simulator:/var/www/html/websites/react/f1-strategy-simulator:f1-simulator:dist"
+  )
 
 load_projects_from_file() {
     local file="$1"
@@ -244,20 +249,12 @@ deploy_project() {
 
     echo "📤 Upload vers le serveur..."
     # Build lftp commands safely; mirror -R uploads local -> remote
-    local lftp_cmd
-    local src_path
-    src_path="./$build_folder/"
-    if [ ! -d "$src_path" ]; then
-        echo "❌ Source de build introuvable: $src_path - skip $project_name"
-        popd >/dev/null
-        return 1
-    fi
-    lftp_cmd="open -u '$FTP_USER','$FTP_PASS' $FTP_HOST;"
+    local lftp_cmd="open -u '$FTP_USER','$FTP_PASS' $FTP_HOST;"
     if [ -n "$remote_folder" ]; then
         # ensure remote path under /www
-        lftp_cmd+="mkdir -p /www/$remote_folder; cd /www/$remote_folder; mirror -R --delete --continue --verbose $src_path .;"
+        lftp_cmd+="mkdir -p /www/$remote_folder; cd /www/$remote_folder; mirror -R --delete --continue --verbose ./$build_folder/ .;"
     else
-        lftp_cmd+="cd /www; mirror -R --delete --continue --verbose $src_path .;"
+        lftp_cmd+="cd /www; mirror -R --delete --continue --verbose ./$build_folder/ .;"
     fi
 
     if ! lftp -c "$lftp_cmd"; then
@@ -280,29 +277,6 @@ declare -A DEPLOY_STATUS
 
 for entry in "${PROJECT_LIST[@]}"; do
     IFS=':' read -r project_name project_path remote_folder build_folder <<<"$entry"
-    # normalize defaults
-    if [ -z "$project_name" ] || [ -z "$project_path" ]; then
-        echo "⚠️  Entrée projet invalide: $entry - skipping"
-        continue
-    fi
-    if [ -z "$remote_folder" ]; then
-        remote_folder=$(basename "$project_path")
-    fi
-    if [ -z "$build_folder" ] || [ "$build_folder" = "auto" ]; then
-        # detect by common build outputs
-        if [ -d "$project_path/dist" ]; then
-            build_folder="dist"
-        elif [ -d "$project_path/build" ]; then
-            build_folder="build"
-        else
-            # inspect package.json build script to guess vite vs cra
-            if [ -f "$project_path/vite.config.ts" ] || [ -f "$project_path/vite.config.js" ]; then
-                build_folder="dist"
-            else
-                build_folder="build"
-            fi
-        fi
-    fi
     status=0
     deploy_project "$project_name" "$project_path" "$remote_folder" "$build_folder" || status=$?
     if [ $status -eq 0 ]; then
