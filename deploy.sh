@@ -176,6 +176,11 @@ deploy_project() {
     fi
 
     echo "🏗️  Build du projet..."
+    # Use a relative base for builds so the generated index references ./assets/.
+    # Relative URLs are more robust when uploading to FTP into a subfolder.
+    export VITE_BASE="./"
+    echo "🔧 Set VITE_BASE=$VITE_BASE for build (relative assets)"
+
     if ! npm run build --silent; then
         echo "❌ Erreur npm run build"
         popd >/dev/null
@@ -185,6 +190,22 @@ deploy_project() {
     if [ ! -d "./$build_folder" ]; then
         echo "❌ Erreur: Le dossier $build_folder n'a pas été créé dans $project_path"
         ls -la
+        popd >/dev/null
+        return 1
+    fi
+
+    # Quick local verification: ensure index.html references either relative or remote base
+    if grep -q "./assets/" ./$build_folder/index.html || grep -q "/${remote_folder}/assets/" ./$build_folder/index.html; then
+        echo "🔎 index.html references relative or remote base (good)"
+    else
+        echo "⚠️ index.html does not reference expected assets path (./assets/ or /${remote_folder}/assets/)"
+    fi
+    # check that a JS file exists in build folder
+    jsfile=$(ls ./$build_folder/assets/*.js 2>/dev/null | head -n 1 || true)
+    if [ -n "$jsfile" ]; then
+        echo "🔎 Found JS asset: $jsfile"
+    else
+        echo "❌ No JS asset found in ./$build_folder/assets/"
         popd >/dev/null
         return 1
     fi
