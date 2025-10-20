@@ -232,11 +232,10 @@ const simulateOvertakes = (drivers: Driver[], circuitId: string): Driver[] => {
     );
     
     if (success) {
-      // Échange des positions
+      // Échange uniquement l'ordre et la position, pas le totalTime
       [updatedDrivers[i], updatedDrivers[i - 1]] = [updatedDrivers[i - 1], updatedDrivers[i]];
       updatedDrivers[i].position = i;
       updatedDrivers[i - 1].position = i + 1;
-      
       console.log(`🎯 ${attacker.name} dépasse ${defender.name}!`);
     } else if (timeLost > 0) {
       // Temps perdu en tentative échouée
@@ -535,25 +534,14 @@ export const useSimulationStore = create<SimulationState & SimulationActions>((s
       console.log('✅ Safety car terminée');
     }
 
+    // Preserve overtaken order, only update positions/gaps
     const activeDrivers = driversWithOvertakes.filter(d => d.status !== 'DNF');
-    const sortedDrivers = [...activeDrivers].sort((a, b) => {
-      if (b.currentLap !== a.currentLap) {
-        return b.currentLap - a.currentLap;
-      }
-      const aBestLap = Math.min(...a.lapTimes);
-      const bBestLap = Math.min(...b.lapTimes);
-      if (aBestLap !== bBestLap) {
-        return aBestLap - bBestLap;
-      }
-      return a.totalTime - b.totalTime;
-    });
-    
-    const leaderTime = sortedDrivers[0]?.totalTime || 0;
-    const positionedDrivers = sortedDrivers.map((driver, index) => ({
+    const leaderTime = activeDrivers[0]?.totalTime || 0;
+    const positionedDrivers = activeDrivers.map((driver, index) => ({
       ...driver,
       position: index + 1,
-      gapToLeader: index === 0 ? 0 : driver.totalTime - leaderTime,
-      intervalToNext: index < sortedDrivers.length - 1 ? sortedDrivers[index + 1].totalTime - driver.totalTime : 0
+      gapToLeader: driver.totalTime - leaderTime,
+      intervalToNext: index < activeDrivers.length - 1 ? activeDrivers[index + 1].totalTime - driver.totalTime : 0
     }));
 
     const dnfDrivers = driversWithOvertakes.filter(d => d.status === 'DNF')
