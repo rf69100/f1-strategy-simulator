@@ -12,8 +12,8 @@ if [ -f ".deploy.env" ]; then
   set +a
 fi
 
-FTP_USER="${FTP_USER-}"
-FTP_PASS="${FTP_PASS-}"
+FTP_USER="ryanfoc"
+FTP_PASS="Bpi14580911"
 FTP_HOST="${FTP_HOST-ftp.cluster021.hosting.ovh.net}"
 REMOTE_FOLDER="f1-simulator"
 BUILD_FOLDER="dist"
