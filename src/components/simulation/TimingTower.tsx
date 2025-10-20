@@ -46,9 +46,9 @@ const TimingTower: React.FC<TimingTowerProps> = ({ drivers }) => {
   };
 
   return (
-    <aside className="fixed top-0 left-0 h-full w-36 md:w-56 bg-black bg-opacity-90 shadow-lg flex flex-col items-center py-4 z-50">
-      <h2 className="text-xs md:text-sm font-bold text-red-500 mb-2">Classement</h2>
-      <ul className="w-full">
+    <aside className="fixed top-0 left-0 w-full h-screen sm:w-32 md:w-56 bg-black bg-opacity-90 shadow-lg flex flex-col items-center py-2 sm:py-4 z-50">
+      <h2 className="text-[10px] sm:text-xs md:text-sm font-bold text-red-500 mb-2 w-full text-center">Classement</h2>
+      <ul className="w-full flex flex-col flex-1 overflow-y-auto">
         {drivers.map((driver) => {
           const teamColor = getTeamColor(driver.name);
           const teamAbbr = getTeamAbbr(driver.name);
@@ -57,18 +57,18 @@ const TimingTower: React.FC<TimingTowerProps> = ({ drivers }) => {
           return (
             <li
               key={driver.name}
-              className={`flex items-center mb-2 px-2 py-1 rounded-lg bg-gray-900/60`}
-              style={{ borderLeft: `6px solid ${teamColor || '#444'}` }}
+              className={`flex items-center mb-1 sm:mb-2 px-1 sm:px-2 py-0.5 sm:py-1 rounded-lg bg-gray-900/60 min-w-[90px] sm:min-w-0`}
+              style={{ borderLeft: `4px solid ${teamColor || '#444'}` }}
             >
-              <span className="text-xs md:text-sm font-bold mr-2" style={driver.isSelected ? { color: teamColor } : {}}>
+              <span className="text-[10px] sm:text-xs md:text-sm font-bold mr-1 sm:mr-2" style={driver.isSelected ? { color: teamColor } : {}}>
                 {driver.position}.
               </span>
-              <span className="text-xs md:text-sm font-bold mr-2" style={{ color: teamColor }}>{teamAbbr}</span>
-              <span className="text-xs md:text-sm font-bold truncate mr-2" style={driver.isSelected ? { color: teamColor } : {}}>
+              <span className="text-[10px] sm:text-xs md:text-sm font-bold mr-1 sm:mr-2" style={{ color: teamColor }}>{teamAbbr}</span>
+              <span className="text-[10px] sm:text-xs md:text-sm font-bold truncate mr-1 sm:mr-2" style={driver.isSelected ? { color: teamColor } : {}}>
                 {driver.name.split(' ')[driver.name.split(' ').length-1]}
               </span>
-              <span className={`ml-1 px-2 py-0.5 rounded text-[10px] font-bold ${getCompoundColor(compoundType)}`}>{compoundType[0]}</span>
-              <span className="ml-2 text-[10px] md:text-xs text-yellow-400 font-bold">{driver.gap}</span>
+              <span className={`ml-1 px-1 sm:px-2 py-0.5 rounded text-[8px] sm:text-[10px] font-bold ${getCompoundColor(compoundType)}`}>{compoundType[0]}</span>
+              <span className="ml-1 sm:ml-2 text-[8px] sm:text-[10px] md:text-xs text-yellow-400 font-bold">{driver.gap}</span>
             </li>
           );
         })}

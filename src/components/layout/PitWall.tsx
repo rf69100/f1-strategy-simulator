@@ -8,6 +8,8 @@ import TimingTower from '../simulation/TimingTower';
 import { StrategyModal } from '../simulation/StrategyModal';
 
 export const PitWall = ({ menuChoices }: { menuChoices?: any }) => {
+  // Responsive: état pour afficher/masquer le classement sur mobile
+  const [showTower, setShowTower] = useState(false);
   // Ajout navigation retour menu
   const [goToMenu, setGoToMenu] = useState(false);
   if (goToMenu) {
@@ -82,15 +84,6 @@ export const PitWall = ({ menuChoices }: { menuChoices?: any }) => {
     ? qualifyingGrid.map(id => drivers.find(d => d.id === id)).filter((d): d is Driver => !!d)
     : drivers.slice().sort((a, b) => a.position - b.position);
 
-    // DEBUG: Show grid info for diagnosis
-    const debugGridInfo = (
-      <div style={{position: 'absolute', top: 0, left: 0, background: '#222', color: 'yellow', zIndex: 9999, padding: '8px', fontSize: '12px'}}>
-        <div>DEBUG GRID:</div>
-        <div>qualifyingGrid: {JSON.stringify(qualifyingGrid)}</div>
-        <div>drivers: {drivers.map(d => d.id + ':' + d.position).join(', ')}</div>
-        <div>orderedDrivers: {orderedDrivers.map(d => d.id).join(', ')}</div>
-      </div>
-    );
   // Build timing data for tower after all variables are initialized
   const timingDrivers = orderedDrivers
     // Correction : classement F1, positions fixes 1 à 20
@@ -113,10 +106,40 @@ export const PitWall = ({ menuChoices }: { menuChoices?: any }) => {
 
   return (
     <div className="w-full px-2 md:px-8 pt-10 pb-20 bg-gradient-to-br from-black via-gray-900 to-red-900 min-h-screen flex flex-col items-center relative">
-  {/* Bloc bouton 'Apparition magique des pilotes' supprimé définitivement */}
-      {debugGridInfo}
-      {/* F1 Timing Tower Sidebar */}
-      <TimingTower drivers={timingDrivers} />
+      {/* Bouton menu classement mobile */}
+      <button
+        className="block md:hidden fixed top-2 left-2 z-50 bg-black bg-opacity-80 rounded-full p-2 shadow-lg"
+        onClick={() => setShowTower(true)}
+        aria-label="Ouvrir le classement"
+      >
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="4" y="6" width="16" height="2" rx="1" fill="#fff"/><rect x="4" y="11" width="16" height="2" rx="1" fill="#fff"/><rect x="4" y="16" width="16" height="2" rx="1" fill="#fff"/></svg>
+      </button>
+      {/* Overlay classement mobile */}
+      {showTower && (
+        <>
+          <div
+            className="fixed inset-0 bg-black bg-opacity-40 z-50 md:hidden"
+            onClick={() => setShowTower(false)}
+            aria-label="Fermer le classement"
+          />
+          <div className="fixed top-0 left-0 h-full w-64 bg-black bg-opacity-95 shadow-2xl z-50 transition-transform duration-300 md:hidden"
+            style={{ transform: showTower ? 'translateX(0)' : 'translateX(-100%)' }}
+          >
+            <button
+              className="absolute top-2 right-2 bg-gray-700 rounded-full p-2"
+              onClick={() => setShowTower(false)}
+              aria-label="Fermer le classement"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18" stroke="#fff" strokeWidth="2"/><path d="M6 18L18 6" stroke="#fff" strokeWidth="2"/></svg>
+            </button>
+            <TimingTower drivers={timingDrivers} />
+          </div>
+        </>
+      )}
+      {/* Classement desktop (sidebar fixe) */}
+      <div className="hidden md:block">
+        <TimingTower drivers={timingDrivers} />
+      </div>
       <div className="w-full max-w-8xl mx-auto flex flex-col items-center">
         {/* HEADER AMÉLIORÉ */}
         <div className="bg-gray-800 rounded-2xl p-6 mb-10 w-full max-w-6xl mx-auto">
