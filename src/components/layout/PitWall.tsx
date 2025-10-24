@@ -13,7 +13,7 @@ export const PitWall = ({ menuChoices }: { menuChoices?: any }) => {
   // Ajout navigation retour menu
   const [goToMenu, setGoToMenu] = useState(false);
   if (goToMenu) {
-    window.location.href = '/'; // ou navigation React si disponible
+    window.location.href = '/f1-strategy-simulator/'; // ou navigation React si disponible
     return null;
   }
   // Find selected drivers from menuChoices
