@@ -25,8 +25,6 @@ const MenuCircuit: React.FC<MenuCircuitProps> = ({ selectedCircuit, onSelectCirc
                 aria-pressed={isSelected}
               >
                 <span className="font-bold text-base sm:text-lg mb-1">{c.name}</span>
-                <span className="text-gray-400 text-xs sm:text-sm mb-1">{c.laps} tours &bull; {c.lapDistance} km/tour</span>
-                <span className="text-xs text-gray-300">Virages: {c.corners} &bull; DRS: {c.drsZones}</span>
                 {isSelected && <span className="mt-2 text-green-400 text-xs font-semibold">Sélectionné</span>}
               </button>
             );
