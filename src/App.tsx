@@ -1,3 +1,4 @@
+
 import { PitWall } from './components/layout/PitWall';
 import { useSimulation } from './hooks/useSimulation';
 import { useSimulationStore } from './stores/simulationStore';
@@ -10,31 +11,29 @@ function App() {
   const simulationStore = useSimulationStore();
   const [showHome, setShowHome] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
-  const [menuDone, setMenuDone] = useState(false);
-
+  const [menuChoices, setMenuChoices] = useState<any>(null);
 
   // Callback pour la fin du menu
   const handleMenuDone = (choices: any) => {
-  console.log('[DEBUG] handleMenuDone called with:', choices);
-  if (choices.circuit) simulationStore.setCircuit(choices.circuit);
-  if (choices.team) simulationStore.setTeam(choices.team);
-  if (choices.driver1 && choices.driver2) simulationStore.setDrivers([choices.driver1, choices.driver2]);
-  // NE PAS démarrer la course automatiquement
-  setMenuDone(true);
-  setShowMenu(false);
+    console.log('[DEBUG] handleMenuDone called with:', choices);
+    if (choices.circuit) simulationStore.setCircuit(choices.circuit);
+    if (choices.team) simulationStore.setTeam(choices.team);
+    if (choices.driver1 && choices.driver2) simulationStore.setDrivers([choices.driver1, choices.driver2]);
+    setMenuChoices(choices);
+    setShowMenu(false);
   };
 
   // Lancement du flow : Home -> Menu -> Simulation
   if (showHome) {
     return <Home onPlay={() => { setShowHome(false); setShowMenu(true); }} />;
   }
-  if (showMenu && !menuDone) {
+  if (showMenu && !menuChoices) {
     return <MenuFlow onDone={handleMenuDone} />;
   }
 
   return (
     <div className={`min-h-screen transition-all duration-300 ${isRaceRunning ? 'bg-gradient-to-br from-gray-900 to-black' : 'bg-gray-900'}`}>
-      <PitWall />
+      <PitWall menuChoices={menuChoices} />
       {/* Overlay d'effet de vitesse pendant la course */}
       {isRaceRunning && (
         <div className="fixed inset-0 pointer-events-none">
